@@ -16,7 +16,7 @@ neuer Tab geöffnet.
 6. In SilverLists Web einmalig über „Downloadordner für SilverLists Web verbinden“ genau
    diesen Unterordner auswählen – nicht den gesamten Downloads-Ordner.
 
-Standardmäßig wird `http://localhost:8000/` geöffnet. Unter den Optionen der
+Standardmäßig wird `https://sandbox.3f-blb.local/silverlists/` geöffnet. Unter den Optionen der
 Erweiterung kann eine andere URL für SilverLists Web eingetragen werden.
 
 ## Sicherheitsmodell

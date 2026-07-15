@@ -1,5 +1,5 @@
 const SILVER_HOST = "live.silvererp.com";
-const DEFAULT_APP_URL = "http://localhost:8000/";
+const DEFAULT_APP_URL = "https://sandbox.3f-blb.local/silverlists/";
 
 function isSilverCsv(download) {
   if (!download.filename?.toLowerCase().endsWith(".csv")) return false;

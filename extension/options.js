@@ -1,4 +1,4 @@
-const DEFAULT_URL = "http://localhost:8000/";
+const DEFAULT_URL = "https://sandbox.3f-blb.local/silverlists/";
 const input = document.querySelector("#url");
 const status = document.querySelector("#status");
 
