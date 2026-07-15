@@ -121,6 +121,8 @@ REPORT_ASSET_DIR = Path(os.getenv(
 ))
 _weekly_offer_images = os.getenv("SILVERLISTS_PRODUCT_IMAGE_DIR", "").strip()
 WEEKLY_OFFER_IMAGE_DIR = Path(_weekly_offer_images) if _weekly_offer_images else None
+WEEKLY_OFFER_IMAGE_MAX_PIXELS = int(os.getenv("SILVERLISTS_PRODUCT_IMAGE_MAX_PIXELS", "480"))
+WEEKLY_OFFER_IMAGE_JPEG_QUALITY = int(os.getenv("SILVERLISTS_PRODUCT_IMAGE_JPEG_QUALITY", "82"))
 MAX_UPLOAD_SIZE = int(os.getenv("SILVERLISTS_MAX_UPLOAD_MB", "100")) * 1024 * 1024
 
 HTTPS_BASE_URL = bool(parsed_base_url and parsed_base_url.scheme == "https")

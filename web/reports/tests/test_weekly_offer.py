@@ -5,7 +5,10 @@ from django.urls import reverse
 from PIL import Image
 from reports.catalog import matching_definitions
 from reports.models import ReportJob, ReportJobSource
-from reports.report_modules.weekly_offer import DESIGNS, load_products, render_pdf, short_article_number
+from reports.report_modules.weekly_offer import (
+    DESIGNS, _optimized_product_image_bytes, detect_country, load_products,
+    render_pdf, short_article_number,
+)
 
 
 HEADER = (
@@ -54,6 +57,42 @@ def test_modern_design_is_available_and_renders():
     assert pdf.count(b"/Type /Page\n") == 2
 
 
+def test_slaughterhouse_design_uses_distinct_cover_and_four_pages_for_29_cards():
+    products = [{
+        "slot": f"front-{number + 1}" if number < 9 else f"back-{number - 8}",
+        "short_number": str(10000 + number), "description": f"Artikel {number + 1}",
+        "price": "12,99", "unit": "kg", "image": "",
+    } for number in range(29)]
+    pdf = render_pdf({
+        "design": "schlachthof", "validity": "gültig diese Woche", "products": products,
+    })
+    assert DESIGNS["schlachthof"].name == "Schlachthof"
+    assert pdf.startswith(b"%PDF")
+    assert pdf.count(b"/Type /Page\n") == 4
+
+
+@pytest.mark.parametrize(("description", "country"), (
+    ("Kiwi lose grün Italien", "IT"),
+    ("Rinderhüfte aus Argentinien", "AR"),
+    ("Paprika rot Holland", "NL"),
+    ("Irish Beef", None),
+))
+def test_country_detection_uses_complete_german_country_names(description, country):
+    assert detect_country(description) == country
+
+
+def test_product_images_are_reduced_for_pdf_embedding(tmp_path):
+    source = tmp_path / "large-product.png"
+    Image.effect_noise((1600, 1200), 80).convert("RGB").save(source, format="PNG")
+    optimized = _optimized_product_image_bytes(
+        str(source), source.stat().st_mtime_ns, 480, 82,
+    )
+    with Image.open(BytesIO(optimized)) as image:
+        assert image.format == "JPEG"
+        assert max(image.size) == 480
+    assert len(optimized) < source.stat().st_size / 5
+
+
 @pytest.mark.django_db
 def test_weekly_offer_workflow_opens_custom_editor(client, settings, tmp_path):
     settings.MEDIA_ROOT = tmp_path / "media"
@@ -69,7 +108,12 @@ def test_weekly_offer_workflow_opens_custom_editor(client, settings, tmp_path):
     assert "Produktbildordner auswählen" in editor.content.decode()
     assert "showDirectoryPicker" in editor.content.decode()
     assert 'enctype="multipart/form-data"' in editor.content.decode()
+    assert 'aria-busy="false"' in editor.content.decode()
+    assert "Produktbilder werden gesucht" in editor.content.decode()
+    assert "generateButton.disabled=busy" in editor.content.decode()
     assert 'data-front-priority="1"' in editor.content.decode()
+    assert "Titelseite · Position" in editor.content.decode()
+    assert "Seite ${2+Math.floor(relative/8)}" in editor.content.decode()
     image_buffer = BytesIO()
     Image.new("RGB", (20, 20), "green").save(image_buffer, format="PNG")
     result = client.post(response.url, {
