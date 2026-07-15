@@ -44,8 +44,7 @@ Repository-Hauptverzeichnis:
 ```bash
 cd ..
 cp .env.example .env
-# mindestens DJANGO_SECRET_KEY, DJANGO_ALLOWED_HOSTS und
-# DJANGO_CSRF_TRUSTED_ORIGINS anpassen
+# mindestens DJANGO_SECRET_KEY und SILVERLISTS_BASE_URL anpassen
 docker compose up --build -d
 ```
 
@@ -71,7 +70,7 @@ Für einen HTTPS-Reverse-Proxy sind typischerweise diese Werte passend:
 DJANGO_TRUST_PROXY_HTTPS=true
 DJANGO_SESSION_COOKIE_SECURE=true
 DJANGO_CSRF_COOKIE_SECURE=true
-DJANGO_CSRF_TRUSTED_ORIGINS=https://silverlists.example.org
+SILVERLISTS_BASE_URL=https://sandbox.3f-blb.local/silverlists/
 ```
 
 `DJANGO_SECURE_SSL_REDIRECT` bleibt standardmäßig aus, damit die Anwendung nicht

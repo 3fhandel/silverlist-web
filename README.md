@@ -69,8 +69,7 @@ Unter **Environment variables** mindestens folgende Werte setzen:
 
 ```dotenv
 DJANGO_SECRET_KEY=<langer-zufälliger-geheimer-wert>
-DJANGO_ALLOWED_HOSTS=silverlists.example.org
-DJANGO_CSRF_TRUSTED_ORIGINS=https://silverlists.example.org
+SILVERLISTS_BASE_URL=https://sandbox.3f-blb.local/silverlists/
 SILVERLISTS_PORT=8000
 ```
 
@@ -93,6 +92,19 @@ DJANGO_SECURE_SSL_REDIRECT=false
 Alle verfügbaren Einstellungen stehen in [.env.example](.env.example). Der
 Reverse-Proxy muss `X-Forwarded-Proto: https` setzen. Die File System Access API
 der Chrome-Integration funktioniert außerhalb von `localhost` nur über HTTPS.
+Aus `SILVERLISTS_BASE_URL` leitet Django automatisch den erlaubten Host, den
+CSRF-Origin, den URL-Präfix sowie die Static- und Cookie-Pfade ab.
+
+Für nginx muss der externe Präfix beim Weiterleiten entfernt werden:
+
+```nginx
+location /silverlists/ {
+    proxy_pass http://silverlists-web:8000/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+}
+```
 
 ### 3. Stack deployen
 

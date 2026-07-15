@@ -1,5 +1,8 @@
 import os
 from pathlib import Path
+from urllib.parse import urlsplit
+
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -14,9 +17,31 @@ def env_list(name: str, default: str = "") -> list[str]:
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "development-only-change-me")
 DEBUG = env_bool("DJANGO_DEBUG", True)
-ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
+SILVERLISTS_BASE_URL = os.getenv("SILVERLISTS_BASE_URL", "").strip().rstrip("/")
+if SILVERLISTS_BASE_URL:
+    parsed_base_url = urlsplit(SILVERLISTS_BASE_URL)
+    if (parsed_base_url.scheme not in {"http", "https"} or
+            not parsed_base_url.hostname or parsed_base_url.query or parsed_base_url.fragment):
+        raise ImproperlyConfigured(
+            "SILVERLISTS_BASE_URL muss eine vollständige HTTP(S)-URL ohne Query oder Fragment sein."
+        )
+    SILVERLISTS_URL_PREFIX = parsed_base_url.path.rstrip("/")
+    SILVERLISTS_ORIGIN = f"{parsed_base_url.scheme}://{parsed_base_url.netloc}"
+else:
+    parsed_base_url = None
+    SILVERLISTS_URL_PREFIX = ""
+    SILVERLISTS_ORIGIN = ""
+
+ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS")
+if parsed_base_url:
+    ALLOWED_HOSTS.append(parsed_base_url.hostname)
 ALLOWED_HOSTS = list(dict.fromkeys([*ALLOWED_HOSTS, "localhost", "127.0.0.1"]))
 CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
+if SILVERLISTS_ORIGIN:
+    CSRF_TRUSTED_ORIGINS = list(dict.fromkeys([
+        *CSRF_TRUSTED_ORIGINS, SILVERLISTS_ORIGIN,
+    ]))
+FORCE_SCRIPT_NAME = SILVERLISTS_URL_PREFIX or None
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -68,7 +93,7 @@ TIME_ZONE = "Europe/Berlin"
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = "static/"
+STATIC_URL = f"{SILVERLISTS_URL_PREFIX}/static/"
 STATIC_ROOT = Path(os.getenv("DJANGO_STATIC_ROOT", str(BASE_DIR / "staticfiles")))
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
@@ -76,7 +101,7 @@ STORAGES = {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
     },
 }
-MEDIA_URL = "media/"
+MEDIA_URL = f"{SILVERLISTS_URL_PREFIX}/media/"
 MEDIA_ROOT = Path(os.getenv("DJANGO_MEDIA_ROOT", str(BASE_DIR / "var" / "media")))
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -92,8 +117,11 @@ REPORT_ASSET_DIR = Path(os.getenv(
 ))
 MAX_UPLOAD_SIZE = int(os.getenv("SILVERLISTS_MAX_UPLOAD_MB", "100")) * 1024 * 1024
 
-if env_bool("DJANGO_TRUST_PROXY_HTTPS"):
+HTTPS_BASE_URL = bool(parsed_base_url and parsed_base_url.scheme == "https")
+if env_bool("DJANGO_TRUST_PROXY_HTTPS", HTTPS_BASE_URL):
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = env_bool("DJANGO_SECURE_SSL_REDIRECT")
-SESSION_COOKIE_SECURE = env_bool("DJANGO_SESSION_COOKIE_SECURE")
-CSRF_COOKIE_SECURE = env_bool("DJANGO_CSRF_COOKIE_SECURE")
+SESSION_COOKIE_SECURE = env_bool("DJANGO_SESSION_COOKIE_SECURE", HTTPS_BASE_URL)
+CSRF_COOKIE_SECURE = env_bool("DJANGO_CSRF_COOKIE_SECURE", HTTPS_BASE_URL)
+SESSION_COOKIE_PATH = f"{SILVERLISTS_URL_PREFIX}/" if SILVERLISTS_URL_PREFIX else "/"
+CSRF_COOKIE_PATH = SESSION_COOKIE_PATH
