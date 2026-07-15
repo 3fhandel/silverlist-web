@@ -117,6 +117,37 @@ Das benannte Volume `silverlists-data` enthält die SQLite-Datenbank, hochgelade
 CSV-Dateien und erzeugte Berichte. Dieses Volume sollte regelmäßig gesichert
 werden und muss bei Stack-Updates erhalten bleiben.
 
+### Produktbilder für Wochenangebote
+
+Das eigenständige Berichtsmodul **Wochenangebot** erkennt Exporte aus
+`Stammdaten → Preislisten-Definitionen`. Es bietet neun große Positionen auf
+der Vorderseite und zwanzig kompakte Positionen auf der Rückseite. Designs
+sind als austauschbare Hintergrund- und Farbdefinitionen gekapselt.
+
+Produktbilder werden rekursiv anhand der kurzen Artikelnummer gesucht. Bei
+`10-90-20-908156` muss der Bilddateiname daher mit `908156` beginnen. Zulässig
+sind PNG, JPEG und WebP.
+
+Im Wochenangebot-Editor kann der Benutzer alternativ einen lokalen
+Produktbildordner über die File System Access API read-only freigeben. Chrome
+speichert das Directory-Handle in IndexedDB, sucht die passenden Dateien lokal
+und lädt beim Erzeugen ausschließlich Bilder positionierter Artikel zum
+jeweiligen Auftrag hoch. Der lokale Pfad wird nicht an den Server übertragen.
+Die Freigabe benötigt Chrome oder Edge und eine HTTPS-Verbindung.
+
+Wenn der Bildbestand direkt auf dem Docker-Host verfügbar ist, kann er weiterhin
+serverseitig read-only eingebunden werden:
+
+```dotenv
+SILVERLISTS_PRODUCT_IMAGE_HOST_DIR=/srv/silverlists/product-images
+SILVERLISTS_PRODUCT_IMAGE_DIR=/product-images
+```
+
+Neue integrierte Designs liegen unter
+`web/reports/report_modules/weekly_offer_designs/<design>/`. Neben `front.jpg`
+und `back.jpg` ist lediglich ein weiterer Eintrag in `DESIGNS` in
+`weekly_offer.py` nötig; Import, Oberfläche und PDF-Renderer bleiben gleich.
+
 ## Chrome-Erweiterung packen
 
 Voraussetzungen: `make`, `node`, `python3` und `zip`.

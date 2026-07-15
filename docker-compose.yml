@@ -18,10 +18,12 @@ services:
       DJANGO_SESSION_COOKIE_SECURE: ${DJANGO_SESSION_COOKIE_SECURE:-true}
       DJANGO_CSRF_COOKIE_SECURE: ${DJANGO_CSRF_COOKIE_SECURE:-true}
       SILVERLISTS_MAX_UPLOAD_MB: ${SILVERLISTS_MAX_UPLOAD_MB:-100}
+      SILVERLISTS_PRODUCT_IMAGE_DIR: ${SILVERLISTS_PRODUCT_IMAGE_DIR:-/product-images}
       GUNICORN_WORKERS: ${GUNICORN_WORKERS:-2}
       GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-180}
     volumes:
       - silverlists-data:/data
+      - ${SILVERLISTS_PRODUCT_IMAGE_HOST_DIR:-./product-images}:/product-images:ro
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=5)"]
       interval: 30s

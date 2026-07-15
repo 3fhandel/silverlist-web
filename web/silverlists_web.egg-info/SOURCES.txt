@@ -18,12 +18,14 @@ reports/migrations/0003_reportjobsource.py
 reports/migrations/__init__.py
 reports/report_modules/__init__.py
 reports/report_modules/ordersatz.py
+reports/report_modules/weekly_offer.py
 reports/services/__init__.py
 reports/services/duckdb_engine.py
 reports/services/pdf_renderer.py
 reports/services/processor.py
 reports/tests/__init__.py
 reports/tests/test_all_report_definitions.py
+reports/tests/test_base_url_settings.py
 reports/tests/test_current_disposition_header.py
 reports/tests/test_disposition_sorting.py
 reports/tests/test_download_integration.py
@@ -35,6 +37,7 @@ reports/tests/test_processor.py
 reports/tests/test_result_actions.py
 reports/tests/test_security_headers.py
 reports/tests/test_silverlists_catalog.py
+reports/tests/test_weekly_offer.py
 reports/tests/test_workflow.py
 silverlists_web.egg-info/PKG-INFO
 silverlists_web.egg-info/SOURCES.txt

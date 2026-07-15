@@ -45,10 +45,19 @@ def _load_json(path: Path) -> ReportDefinition:
 
 def get_catalog() -> list[ReportDefinition]:
     from reports.report_modules.ordersatz import definitions as ordersatz_definitions
+    from reports.report_modules.weekly_offer import definitions as weekly_offer_definitions
 
+    module_definitions = [*ordersatz_definitions(), *weekly_offer_definitions()]
+    module_keys = {item.key for item in module_definitions}
     directory = Path(settings.REPORT_DEFINITION_DIR)
-    generic = [_load_json(path) for path in sorted(directory.rglob("*.json"))]
-    return sorted([*generic, *ordersatz_definitions()], key=lambda item: item.name)
+    generic = [
+        definition for path in sorted(directory.rglob("*.json"))
+        if (definition := _load_json(path)).key not in module_keys
+    ]
+    return sorted(
+        [*generic, *module_definitions],
+        key=lambda item: item.name,
+    )
 
 
 def get_definition(key: str) -> ReportDefinition:

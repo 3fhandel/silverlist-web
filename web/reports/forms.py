@@ -3,6 +3,7 @@ from django.conf import settings
 
 from .catalog import get_catalog
 from .models import ReportJob
+from .report_modules.weekly_offer import DESIGNS, SLOT_CHOICES
 
 
 class UploadForm(forms.ModelForm):
@@ -51,3 +52,64 @@ class ReportConfigurationForm(forms.Form):
                 label=source["label"],
                 widget=forms.FileInput(attrs={"accept": ".csv,text/csv"}),
             )
+
+
+class WeeklyOfferConfigurationForm(forms.Form):
+    design = forms.ChoiceField(
+        label="Design",
+        choices=[(key, design.name) for key, design in DESIGNS.items()],
+    )
+    validity = forms.CharField(label="Gültigkeitszeile", max_length=120)
+
+    def __init__(self, *args, products, initial_validity="", **kwargs):
+        self.products = products
+        initial = kwargs.setdefault("initial", {})
+        initial.setdefault("validity", initial_validity)
+        super().__init__(*args, **kwargs)
+        for product in products:
+            suffix = product["id"]
+            self.fields[f"slot_{suffix}"] = forms.ChoiceField(
+                label="Position", choices=(("", "Nicht verwenden"), *SLOT_CHOICES),
+                required=False,
+            )
+            self.fields[f"description_{suffix}"] = forms.CharField(
+                label="Artikel", max_length=180, initial=product["description"], required=False,
+            )
+            self.fields[f"price_{suffix}"] = forms.CharField(
+                label="Preis", max_length=30, initial=product["price"], required=False,
+            )
+            self.fields[f"unit_{suffix}"] = forms.CharField(
+                label="Einheit", max_length=30, initial=product["unit"], required=False,
+            )
+
+    def clean(self):
+        cleaned = super().clean()
+        occupied = {}
+        selected = []
+        for product in self.products:
+            suffix = product["id"]
+            slot = cleaned.get(f"slot_{suffix}")
+            if not slot:
+                continue
+            if slot in occupied:
+                self.add_error(
+                    f"slot_{suffix}",
+                    f"Position ist bereits mit {occupied[slot]} belegt.",
+                )
+                continue
+            description = (cleaned.get(f"description_{suffix}") or "").strip()
+            if not description:
+                self.add_error(f"description_{suffix}", "Bitte eine Bezeichnung angeben.")
+                continue
+            occupied[slot] = description
+            selected.append({
+                **product,
+                "slot": slot,
+                "description": description,
+                "price": (cleaned.get(f"price_{suffix}") or "").strip(),
+                "unit": (cleaned.get(f"unit_{suffix}") or "").strip(),
+            })
+        if not selected:
+            raise forms.ValidationError("Bitte mindestens einen Artikel positionieren.")
+        cleaned["selected_products"] = selected
+        return cleaned

@@ -65,7 +65,14 @@ def process_job(job: ReportJob) -> ReportJob:
 
     try:
         definition = get_definition(job.report_key)
-        if definition.implementation == "python" and definition.renderer == "ordersatz":
+        if definition.renderer == "weekly-offer":
+            from reports.report_modules.weekly_offer import render_pdf
+
+            context = {"job": job, "definition": definition, **job.parameters}
+            template = "reports/results/weekly_offer.html"
+            pdf = render_pdf(job.parameters)
+            result = None
+        elif definition.renderer == "ordersatz":
             from reports.report_modules.ordersatz import query_for
 
             definition = replace(
@@ -73,11 +80,18 @@ def process_job(job: ReportJob) -> ReportJob:
                 query=query_for(definition, tuple(job.detected_header)),
             )
 
-        result = execute_report(
-            Path(job.source_file.path), definition, job.parameters,
-            {source.name: source.source_file.path for source in job.additional_sources.all()},
-        )
-        if definition.renderer == "ordersatz":
+            result = execute_report(
+                Path(job.source_file.path), definition, job.parameters,
+                {source.name: source.source_file.path for source in job.additional_sources.all()},
+            )
+        else:
+            result = execute_report(
+                Path(job.source_file.path), definition, job.parameters,
+                {source.name: source.source_file.path for source in job.additional_sources.all()},
+            )
+        if definition.renderer == "weekly-offer":
+            pass
+        elif definition.renderer == "ordersatz":
             context = _ordersatz_context(job, result.columns, result.rows)
             template = "reports/results/ordersatz.html"
             pdf = render_ordersatz_pdf(context["groups"], context["position_count"])

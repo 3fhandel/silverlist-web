@@ -119,6 +119,8 @@ REPORT_DEFINITION_DIR = BASE_DIR / "report_definitions"
 REPORT_ASSET_DIR = Path(os.getenv(
     "SILVERLISTS_ASSET_DIR", str(BASE_DIR / "assets")
 ))
+_weekly_offer_images = os.getenv("SILVERLISTS_PRODUCT_IMAGE_DIR", "").strip()
+WEEKLY_OFFER_IMAGE_DIR = Path(_weekly_offer_images) if _weekly_offer_images else None
 MAX_UPLOAD_SIZE = int(os.getenv("SILVERLISTS_MAX_UPLOAD_MB", "100")) * 1024 * 1024
 
 HTTPS_BASE_URL = bool(parsed_base_url and parsed_base_url.scheme == "https")
