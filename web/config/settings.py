@@ -98,7 +98,11 @@ STATIC_ROOT = Path(os.getenv("DJANGO_STATIC_ROOT", str(BASE_DIR / "staticfiles")
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        "BACKEND": (
+            "django.contrib.staticfiles.storage.StaticFilesStorage"
+            if DEBUG else
+            "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        )
     },
 }
 MEDIA_URL = f"{SILVERLISTS_URL_PREFIX}/media/"

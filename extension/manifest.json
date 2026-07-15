@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SilverLists Web Download-Integration",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Öffnet SilverERP-CSV-Exporte auf Wunsch mit SilverLists Web.",
   "author": "Sebastian Walter (3F Handelsgesellschaft mbH)",
   "permissions": ["downloads", "storage", "tabs", "system.display"],
