@@ -1,0 +1,13 @@
+Metadata-Version: 2.4
+Name: silverlists-web
+Version: 0.1.0
+Summary: Webbasierte Berichtsaufbereitung für SilverERP-Exporte
+Requires-Python: >=3.12
+Requires-Dist: Django<5.3,>=5.2
+Requires-Dist: duckdb<1.6,>=1.5
+Requires-Dist: reportlab<5,>=4.4
+Requires-Dist: gunicorn<24,>=23
+Requires-Dist: whitenoise<7,>=6.9
+Provides-Extra: dev
+Requires-Dist: pytest>=8.3; extra == "dev"
+Requires-Dist: pytest-django>=4.11; extra == "dev"

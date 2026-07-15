@@ -1,0 +1,32 @@
+services:
+  silverlists-web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    image: silverlists-web:${SILVERLISTS_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - "${SILVERLISTS_PORT:-8000}:8000"
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?DJANGO_SECRET_KEY muss gesetzt sein}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-false}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS:-}
+      DJANGO_TRUST_PROXY_HTTPS: ${DJANGO_TRUST_PROXY_HTTPS:-false}
+      DJANGO_SECURE_SSL_REDIRECT: ${DJANGO_SECURE_SSL_REDIRECT:-false}
+      DJANGO_SESSION_COOKIE_SECURE: ${DJANGO_SESSION_COOKIE_SECURE:-false}
+      DJANGO_CSRF_COOKIE_SECURE: ${DJANGO_CSRF_COOKIE_SECURE:-false}
+      SILVERLISTS_MAX_UPLOAD_MB: ${SILVERLISTS_MAX_UPLOAD_MB:-100}
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-2}
+      GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-180}
+    volumes:
+      - silverlists-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  silverlists-data:

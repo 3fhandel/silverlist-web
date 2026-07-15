@@ -1,0 +1,58 @@
+{
+  "key": "lf-bestellliste",
+  "name": "Bestellliste Lieferantenartikel",
+  "description": "Zu verwenden für ehem. Hauptkundennummern-Listen sowie 12er/16er/55er-Listen.",
+  "export_source": "Stammdaten / Lieferant / Lieferanten-Artikel",
+  "export_instructions": "In SilverERP Stammdaten / Lieferant / Lieferanten-Artikel öffnen und die angezeigte Liste als CSV exportieren.",
+  "required_columns": [
+    "Artikel-Nr.",
+    "Bezeichnung 1",
+    "Lf.-Artikel-Nr.",
+    "Bestand",
+    "Preis",
+    "Rabatt",
+    "Frei",
+    "Endpreis",
+    "Ab Menge",
+    "S.-Einheit",
+    "Hauptlieferant",
+    "Lieferzeit",
+    "Gültig ab",
+    "Gültig bis",
+    "Referenz",
+    "Bedarf",
+    "Bestellt",
+    "Angebot",
+    "EK-Mittel",
+    "EK-Kalk",
+    "Lf.-Bezeichnung 3",
+    "Lf.-Bezeichnung 4",
+    "Archiv Artikel"
+  ],
+  "query": "SELECT \n\t\tCASE WHEN `Hauptlieferant` = 'Ja' THEN `Artikel-Nr.` || ' (Hauptlieferant)' ELSE `Artikel-Nr.` END AS 'ArtNr', \n\t\t`Bezeichnung 1` || chr(10) || '(' || `Referenz` || ')' AS 'Bezeichnung', \n\t\t`S.-Einheit` AS 'Einheit',\n\t\t'' AS 'Menge'\n\t\tFROM data\n\t\tWHERE `Archiv Artikel` != '1'",
+  "renderer": "generic-table",
+  "variables": [
+    {
+      "name": "title",
+      "type": "constant",
+      "label": "title",
+      "value": "Lieferanten-Bestellliste"
+    },
+    {
+      "name": "subtitle",
+      "type": "sql",
+      "label": "subtitle",
+      "query": "SELECT 'Druckdatum ' || strftime('%d.%m.%Y','now')"
+    }
+  ],
+  "additional_sources": [],
+  "groups": [],
+  "options": {
+    "show_header": true,
+    "show_page_numbers": true,
+    "compact_margins": false,
+    "legacy_template": "templates/tableWithHeader.html",
+    "layout": "branded-table"
+  },
+  "legacy_source": "lf_bestellliste.rpt"
+}

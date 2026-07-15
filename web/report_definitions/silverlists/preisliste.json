@@ -1,0 +1,53 @@
+{
+  "key": "preisliste",
+  "name": "Sonderpreisliste",
+  "description": "Zu verwenden für ehem. Hauptkundennummern-Listen sowie 12er/16er/55er-Listen.",
+  "export_source": "Stammdaten / Preislisten-Definition",
+  "export_instructions": "In SilverERP Stammdaten / Preislisten-Definition öffnen und die angezeigte Liste als CSV exportieren.",
+  "required_columns": [
+    "Artikel-Nr.",
+    "Warengruppe",
+    "Preis",
+    "Währung",
+    "Rabatt",
+    "Ab Menge",
+    "S.-Einheit",
+    "Bezeichnung 1",
+    "Bezeichnung 2",
+    "Suchbegriff",
+    "Gültig ab",
+    "Gültig bis",
+    "Archiv Artikel"
+  ],
+  "query": "SELECT `Artikel-Nr.`, `Bezeichnung 1` AS Bezeichnung, `S.-Einheit` AS Einheit,\n\t\tCASE WHEN {{ preiseZeigen }} THEN `Preis` ELSE '--------' END AS 'E-Preis', ' ____________ ' AS Menge FROM data WHERE `Archiv Artikel` != 1",
+  "renderer": "generic-table",
+  "variables": [
+    {
+      "name": "title",
+      "type": "constant",
+      "label": "title",
+      "value": "Artikelpreisliste"
+    },
+    {
+      "name": "subtitle",
+      "type": "sql",
+      "label": "subtitle",
+      "query": "SELECT 'Tagespreise vom ' || strftime('%d.%m.%Y','now')"
+    },
+    {
+      "name": "preiseZeigen",
+      "type": "userBool",
+      "label": "Preise anzeigen?"
+    }
+  ],
+  "additional_sources": [],
+  "groups": [],
+  "options": {
+    "show_header": true,
+    "show_page_numbers": true,
+    "compact_margins": false,
+    "legacy_template": "templates/tableWithHeader.html",
+    "layout": "branded-table"
+  },
+  "legacy_source": "preisliste.rpt"
+}

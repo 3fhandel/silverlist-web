@@ -1,0 +1,80 @@
+{
+  "key": "tourenschein",
+  "name": "Tourenschein",
+  "description": "Tourenbegleitschein mit Fahrerinfos.",
+  "export_source": "Disposition Aufträge",
+  "export_instructions": "In SilverERP Disposition Aufträge öffnen und die angezeigte Liste als CSV exportieren.",
+  "required_columns": [
+    "Einheit",
+    "Bezeichnung 1",
+    "Pos.-Netto",
+    "Tour",
+    "W.-Termin",
+    "Beleg-Nr.",
+    "Kunden-Nr.",
+    "Name 1",
+    "Artikel-Nr.",
+    "Menge",
+    "S-Einheit",
+    "Reserviert",
+    "Zur Kommission freigegebene Menge",
+    "Termin",
+    "B.-Termin",
+    "E.-Termin",
+    "Bezeichnung 2",
+    "Versandart",
+    "WG-Code",
+    "WG Bezeichnung 1",
+    "Status",
+    "Beleg-Datum",
+    "Referenz",
+    "B.-Netto",
+    "B.-MwSt.",
+    "B.-Brutto",
+    "Bestell-Nr.",
+    "Bestelldatum",
+    "Kurztext 1",
+    "Kurztext 2",
+    "Kurztext 3",
+    "Ort",
+    "Suchbegriff",
+    "Name 2",
+    "Straße",
+    "Land",
+    "PLZ",
+    "Telefon",
+    "Auftrags-Status"
+  ],
+  "query": "SELECT ANY_VALUE('[' || `Kunden-Nr.` || '] ' || `Name 1` || chr(10) || `Ort`) AS Name, ANY_VALUE(`Beleg-Nr.` || ' (' || `W.-Termin` || ')' || chr(10) || `B.-Brutto` || ' €') AS Vorgang,\n\t\t(CASE INSTR(',' || GROUP_CONCAT(`Artikel-Nr.`), ',10') WHEN 0 THEN '' ELSE 'X TIEFKÜHL' END) || chr(10) \n\t\t\t|| (CASE INSTR(',' || GROUP_CONCAT(`Artikel-Nr.`), ',20') WHEN 0 THEN '' ELSE 'O FLEISCH' END) AS Wareninfo\n        FROM data GROUP BY `Beleg-Nr.` ORDER BY MIN(`Kunden-Nr.`) ASC, `Beleg-Nr.` ASC ",
+  "renderer": "generic-table",
+  "variables": [
+    {
+      "name": "tour",
+      "type": "sql",
+      "label": "tour",
+      "query": "SELECT REPLACE(GROUP_CONCAT(DISTINCT `Tour`), ',', ', ') FROM \n\t\t\t\t(SELECT CASE `Tour` WHEN '' THEN 'NZ' ELSE `Tour` END AS 'Tour' FROM data ORDER BY `Tour` ASC) x"
+    },
+    {
+      "name": "title",
+      "type": "constant",
+      "label": "title",
+      "value": "Tourenschein {{ tour }}"
+    },
+    {
+      "name": "subtitle",
+      "type": "autoit",
+      "label": "subtitle",
+      "command": "'Export-Zeitstempel: ' & @MDAY & '.' & @MON & '.' & @YEAR & ', ' & @HOUR & ':' & @MIN & ':' & @SEC"
+    }
+  ],
+  "additional_sources": [],
+  "groups": [],
+  "options": {
+    "show_header": true,
+    "show_page_numbers": true,
+    "compact_margins": false,
+    "legacy_template": "templates/tableIntern.html",
+    "layout": "internal-table"
+  },
+  "legacy_source": "tourenschein.rpt"
+}

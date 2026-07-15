@@ -1,0 +1,50 @@
+{
+  "key": "pl-adressetiketten",
+  "name": "Adressetiketten aus Preislisten",
+  "description": "Zum Druck auf Avery 3474",
+  "export_source": "Stammdaten / Preislisten-Definition",
+  "export_instructions": "In SilverERP Stammdaten / Preislisten-Definition öffnen und die angezeigte Liste als CSV exportieren.",
+  "required_columns": [
+    "Suchbegriff",
+    "Kunden-Nr.",
+    "Name 1",
+    "Name 2",
+    "Land",
+    "PLZ",
+    "Ort",
+    "Telefon 1",
+    "Straße",
+    "Zusatz 1",
+    "Zusatz 2",
+    "PLZ-Postfach",
+    "Postfach",
+    "Telefon 2",
+    "Mobilnummer 1",
+    "Fax 1",
+    "Email 1",
+    "Webseite 1",
+    "Kunden-Art",
+    "Adressen-Art",
+    "c.idRecord"
+  ],
+  "query": "SELECT `Name 1` || chr(10) || `Name 2` || chr(10) || `Straße` || chr(10) || `PLZ` || ' ' || `Ort`\n\t\tFROM data WHERE `Kunden-Art` = 'Angebot: Post'",
+  "renderer": "address-labels",
+  "variables": [
+    {
+      "name": "title",
+      "type": "constant",
+      "label": "title",
+      "value": "Artikelpreisliste"
+    }
+  ],
+  "additional_sources": [],
+  "groups": [],
+  "options": {
+    "show_header": true,
+    "show_page_numbers": false,
+    "compact_margins": true,
+    "legacy_template": "templates/addresslabels2.html",
+    "layout": "address-labels"
+  },
+  "legacy_source": "pl_adressetiketten.rpt"
+}

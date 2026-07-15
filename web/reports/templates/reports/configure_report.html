@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% block title %}Bericht konfigurieren · SilverLists Web{% endblock %}
+{% block content %}<a class="back" href="{% url 'reports:select-report' job.pk %}">← Berichtsauswahl</a>
+<header class="page-head"><span class="eyebrow">Letzter Schritt</span><h1>{{ definition.name }}</h1><p>{{ definition.description }}</p></header>
+<form method="post" enctype="multipart/form-data" class="panel report-selection">{% csrf_token %}{{ form.as_p }}<button class="primary" type="submit">Auftrag starten</button></form>{% endblock %}

@@ -1,0 +1,9 @@
+Django<5.3,>=5.2
+duckdb<1.6,>=1.5
+reportlab<5,>=4.4
+gunicorn<24,>=23
+whitenoise<7,>=6.9
+
+[dev]
+pytest>=8.3
+pytest-django>=4.11

@@ -1,0 +1,12 @@
+.git
+**/.DS_Store
+**/__pycache__
+**/*.pyc
+web/.venv
+web/.pytest_cache
+web/db.sqlite3
+web/var
+web/tmp
+web/output
+web/staticfiles
+extension/dist

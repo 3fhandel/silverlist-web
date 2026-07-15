@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="{% url 'reports:dashboard' %}">← Zur Übersicht</a></p>
+<section class="card">
+  <div class="result-head"><div><span class="eyebrow">Fertiger Bericht</span><h1>{{ definition.name|default:job.report_key }}</h1><p>Status: {{ job.get_status_display }}</p></div>
+  {% if job.result_pdf %}<div><div class="result-actions">
+    <button class="icon-button" type="button" id="print-report" title="Drucken" aria-label="Drucken"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg></button>
+    <button class="icon-button primary-icon" type="button" id="mail-report" title="Per E-Mail senden" aria-label="Per E-Mail senden"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></button>
+    <a class="icon-button" href="{% url 'reports:result-pdf' job.pk %}?download=1" title="PDF herunterladen" aria-label="PDF herunterladen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg></a>
+  </div><p class="action-status" id="action-status" role="status"></p></div>{% endif %}</div>
+  {% if job.error_message %}<pre>{{ job.error_message }}</pre>{% endif %}
+  {% if job.result_html %}
+    <iframe id="report-preview" class="preview-frame" title="Berichtsvorschau" src="{% if job.result_pdf %}{% url 'reports:result-pdf' job.pk %}{% else %}{% url 'reports:result-html' job.pk %}{% endif %}"></iframe>
+  {% endif %}
+</section>
+{% if job.result_pdf %}<script>
+const pdfUrl='{% url "reports:result-pdf" job.pk %}',downloadUrl=pdfUrl+'?download=1';
+const reportName='{{ definition.name|default:job.report_key|escapejs }}',fileName='{{ job.report_key|escapejs }}.pdf';
+const actionStatus=document.getElementById('action-status');
+document.getElementById('print-report').addEventListener('click',()=>{const preview=document.getElementById('report-preview');try{preview.contentWindow.focus();preview.contentWindow.print()}catch(error){window.open(pdfUrl,'_blank');actionStatus.textContent='PDF geöffnet. Verwende dort die Druckfunktion.'}});
+document.getElementById('mail-report').addEventListener('click',async()=>{actionStatus.textContent='PDF wird vorbereitet …';try{const response=await fetch(pdfUrl);if(!response.ok)throw new Error('PDF konnte nicht geladen werden.');const file=new File([await response.blob()],fileName,{type:'application/pdf'});const shareData={title:reportName,text:`Bericht aus SilverLists Web: ${reportName}`,files:[file]};if(navigator.share&&(!navigator.canShare||navigator.canShare(shareData))){await navigator.share(shareData);actionStatus.textContent='Bericht wurde an die ausgewählte Anwendung übergeben.';return}const link=document.createElement('a');link.href=downloadUrl;link.download=fileName;link.click();location.href=`mailto:?subject=${encodeURIComponent('Bericht aus SilverLists Web: '+reportName)}&body=${encodeURIComponent('Der Bericht wurde heruntergeladen. Bitte die Datei „'+fileName+'“ an diese E-Mail anhängen.')}`;actionStatus.textContent='PDF heruntergeladen und Mailprogramm geöffnet. Bitte die PDF anhängen.'}catch(error){if(error.name!=='AbortError')actionStatus.textContent=error.message;else actionStatus.textContent='Versand abgebrochen.'}});
+</script>{% endif %}
+{% endblock %}

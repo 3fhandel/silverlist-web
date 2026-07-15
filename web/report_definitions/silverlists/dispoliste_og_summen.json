@@ -1,0 +1,114 @@
+{
+  "key": "dispoliste-og-summen",
+  "name": "Dispoliste Obst/Gemüse Summen",
+  "description": "Erzeugung von Obst-Gemüse-Bedarfslisten mit Artikelsummen.",
+  "export_source": "Disposition Aufträge",
+  "export_instructions": "In SilverERP Disposition Aufträge öffnen und die angezeigte Liste als CSV exportieren.",
+  "required_columns": [
+    "Einheit",
+    "Bezeichnung 1",
+    "Pos.-Netto",
+    "Tour",
+    "W.-Termin",
+    "Beleg-Nr.",
+    "Kunden-Nr.",
+    "Name 1",
+    "Artikel-Nr.",
+    "Menge",
+    "S-Einheit",
+    "Reserviert",
+    "Zur Kommission freigegebene Menge",
+    "Termin",
+    "B.-Termin",
+    "E.-Termin",
+    "Bezeichnung 2",
+    "Versandart",
+    "WG-Code",
+    "WG Bezeichnung 1",
+    "Status",
+    "Beleg-Datum",
+    "Referenz",
+    "B.-Netto",
+    "B.-MwSt.",
+    "B.-Brutto",
+    "Bestell-Nr.",
+    "Bestelldatum",
+    "Kurztext 1",
+    "Kurztext 2",
+    "Kurztext 3",
+    "Ort",
+    "Suchbegriff",
+    "Name 2",
+    "Straße",
+    "Land",
+    "PLZ",
+    "Telefon",
+    "Auftrags-Status"
+  ],
+  "query": "SELECT '' AS Hinweis, `Artikel-Nr.`, ANY_VALUE(`Bezeichnung 1`) AS Bezeichnung,\n        SUM(CAST(REPLACE(Menge, ',', '.') AS DOUBLE)) AS Menge, `Einheit`,\n        BOOL_OR(`Bezeichnung 2` = 'Vorbestell-Artikel') AS '__vorbestellung'\n        FROM data WHERE `Artikel-Nr.` LIKE '60-%' GROUP BY `Artikel-Nr.`, `Einheit`\n        ORDER BY `Artikel-Nr.`, `Einheit`",
+  "renderer": "generic-table",
+  "variables": [
+    {
+      "name": "title",
+      "type": "constant",
+      "label": "title",
+      "value": "Obst/Gemüse-Bedarf"
+    },
+    {
+      "name": "letzteAfNummer",
+      "type": "sql",
+      "label": "letzteAfNummer",
+      "query": "SELECT MAX(`Beleg-Nr.`) FROM data"
+    },
+    {
+      "name": "datumMax",
+      "type": "sql",
+      "label": "datumMax",
+      "query": "SELECT MAX(`W.-Termin`) FROM data"
+    },
+    {
+      "name": "datumMin",
+      "type": "sql",
+      "label": "datumMin",
+      "query": "SELECT MIN(`W.-Termin`) FROM data"
+    },
+    {
+      "name": "subtitle",
+      "type": "autoit",
+      "label": "subtitle",
+      "command": "'Letzte Auftragsnummer: {{ letzteAfNummer }}\nZeitraum: {{ datumMin }} - {{ datumMax }}\nExport-Zeitstempel: ' & @MDAY & '.' & @MON & '.' & @YEAR & ', ' & @HOUR & ':' & @MIN & ':' & @SEC"
+    }
+  ],
+  "additional_sources": [],
+  "groups": [],
+  "options": {
+    "show_header": true,
+    "show_page_numbers": true,
+    "compact_margins": false,
+    "legacy_template": "templates/tableIntern.html",
+    "layout": "internal-table",
+    "hidden_columns": ["__vorbestellung"],
+    "column_width_weights": {
+      "Hinweis": 0.35,
+      "Artikel-Nr.": 1.35,
+      "Bezeichnung": 4.5,
+      "Menge": 0.9,
+      "Einheit": 0.7
+    },
+    "conditional_styles": [
+      {
+        "when_column": "__vorbestellung",
+        "equals": true,
+        "target_column": "Hinweis",
+        "style": "warning-icon"
+      },
+      {
+        "when_column": "__vorbestellung",
+        "equals": true,
+        "target_column": "Bezeichnung",
+        "style": "bold-italic"
+      }
+    ]
+  },
+  "legacy_source": "dispoliste_og_summen.rpt"
+}

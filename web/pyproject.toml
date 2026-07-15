@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "silverlists-web"
+version = "0.1.0"
+description = "Webbasierte Berichtsaufbereitung für SilverERP-Exporte"
+authors = [
+  {name = "Sebastian Walter (3F Handelsgesellschaft mbH)"},
+]
+requires-python = ">=3.12"
+dependencies = [
+  "Django>=5.2,<5.3",
+  "duckdb>=1.5,<1.6",
+  "reportlab>=4.4,<5",
+  "gunicorn>=23,<24",
+  "whitenoise>=6.9,<7",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3",
+  "pytest-django>=4.11",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["test_*.py", "tests.py"]
+
+[tool.setuptools.packages.find]
+include = ["config*", "reports*"]

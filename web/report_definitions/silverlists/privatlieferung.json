@@ -1,0 +1,59 @@
+{
+  "key": "privatlieferung",
+  "name": "Privatlieferungs-Liste",
+  "description": "sdassad",
+  "export_source": "Kundenstamm / Kundenartikel",
+  "export_instructions": "In SilverERP Kundenstamm / Kundenartikel öffnen und die angezeigte Liste als CSV exportieren.",
+  "required_columns": [
+    "Artikel-Nr.",
+    "Bezeichnung 1",
+    "Kd.-Artikel-Nr.",
+    "Preis",
+    "Währung",
+    "Rabatt",
+    "EK-Kalk",
+    "Ab Menge",
+    "S.-Einheit",
+    "Kd.-Bezeichnung 1",
+    "Kd.-Bezeichnung 4",
+    "Gültig ab",
+    "Gültig bis",
+    "Referenz",
+    "Suchbegriff",
+    "Bezeichnung 2",
+    "Bezeichnung 3",
+    "Bezeichnung 4",
+    "EK-Mittel",
+    "Archiv Artikel",
+    "s.idCustomer",
+    "s.idArticle",
+    "p.idArticle",
+    "p.bvReduction"
+  ],
+  "query": "SELECT \n\t\t\tCASE WHEN `Kd.-Bezeichnung 1` = '' THEN `Bezeichnung 1` ELSE `Kd.-Bezeichnung 1` END AS 'Artikel',\n\t\t\t`S.-Einheit` AS 'Einheit',\n\t\t\t`Preis`,\n\t\t\t'   ' AS 'Bestellmenge'\n\t\t\tFROM data\n\t\tORDER BY `Artikel-Nr.` ASC",
+  "renderer": "generic-table",
+  "variables": [
+    {
+      "name": "title",
+      "type": "constant",
+      "label": "title",
+      "value": "Artikepreise für Privatlieferungen"
+    },
+    {
+      "name": "subtitle",
+      "type": "constant",
+      "label": "subtitle",
+      "value": "Gültig ab ..."
+    }
+  ],
+  "additional_sources": [],
+  "groups": [],
+  "options": {
+    "show_header": true,
+    "show_page_numbers": true,
+    "compact_margins": false,
+    "legacy_template": "templates/tableWithHeader.html",
+    "layout": "branded-table"
+  },
+  "legacy_source": "privatlieferung.rpt"
+}

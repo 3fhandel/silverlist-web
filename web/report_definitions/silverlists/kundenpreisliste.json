@@ -1,0 +1,51 @@
+{
+  "key": "kundenpreisliste",
+  "name": "Ind. Kundenpreisliste",
+  "description": "Bspw. Eisdielen-Preisliste (Artikel-Schlagwort).",
+  "export_source": "Stammdaten / [D] Kundenpreise",
+  "export_instructions": "In SilverERP Stammdaten / [D] Kundenpreise öffnen und die angezeigte Liste als CSV exportieren.",
+  "required_columns": [
+    "Artikel-Nr.",
+    "Suchbegriff",
+    "Bezeichnung 1",
+    "Bezeichnung 2",
+    "Ab Menge",
+    "Grundpreis",
+    "Währung",
+    "Preis-Info",
+    "Rabatt",
+    "Rabatt2",
+    "Rabatt3",
+    "Endpreis",
+    "Mwst",
+    "Endpreis Brutto",
+    "Bruttopreis",
+    "Rabattierbar"
+  ],
+  "query": "SELECT `Artikel-Nr.`, `Bezeichnung 1` AS Bezeichnung, 'N/A' AS Einheit, `Endpreis` AS 'Ihr Preis', ' ____________ ' AS Menge FROM data WHERE TRY_CAST(REPLACE(REPLACE(`Ab Menge`, '.', ''), ',', '.') AS DOUBLE) = 0",
+  "renderer": "generic-table",
+  "variables": [
+    {
+      "name": "title",
+      "type": "constant",
+      "label": "title",
+      "value": "Artikelpreisliste"
+    },
+    {
+      "name": "subtitle",
+      "type": "sql",
+      "label": "subtitle",
+      "query": "SELECT 'Stand ' || strftime('%d.%m.%Y','now')"
+    }
+  ],
+  "additional_sources": [],
+  "groups": [],
+  "options": {
+    "show_header": true,
+    "show_page_numbers": true,
+    "compact_margins": false,
+    "legacy_template": "templates/tableWithHeader.html",
+    "layout": "branded-table"
+  },
+  "legacy_source": "kundenpreisliste.rpt"
+}

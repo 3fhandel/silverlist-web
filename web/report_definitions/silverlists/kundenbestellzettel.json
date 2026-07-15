@@ -1,0 +1,99 @@
+{
+  "key": "kundenbestellzettel",
+  "name": "Kundensortiment",
+  "description": "Kundensortiment mit allen Artikeln der letzten n Tage (n ist frei wählbar).",
+  "export_source": "Kundenstamm / Info / Verkaufshistorie",
+  "export_instructions": "In SilverERP Kundenstamm / Info / Verkaufshistorie öffnen und die angezeigte Liste als CSV exportieren.",
+  "required_columns": [
+    "Auftrag",
+    "Artikel-Nr.",
+    "Bezeichnung 1",
+    "Menge",
+    "Einheit",
+    "Grundpreis",
+    "Rabatt",
+    "Liefertermin",
+    "Bezeichnung 2",
+    "Lieferschein",
+    "Rechnung",
+    "RG-Datum",
+    "Bezeichnung 3",
+    "Bezeichnung 4",
+    "Kunden-Nr.",
+    "Name 1",
+    "W.-Termin",
+    "Gesamtpreis",
+    "Pos.",
+    "Datum",
+    "Status",
+    "Kurztext 1",
+    "Kurztext 2",
+    "Kurztext 3",
+    "Referenz",
+    "Ort",
+    "Suchbegriff",
+    "Name 2",
+    "Straße",
+    "Land",
+    "PLZ",
+    "Telefon",
+    "S-Menge",
+    "S-Einheit",
+    "A.-Suchbegriff"
+  ],
+  "query": "SELECT `Artikel-Nr.`, `Artikel`, `Einheit`, `Menge` FROM (SELECT `Artikel-Nr.`, `Bezeichnung 1` AS 'Artikel', `Einheit`, \n\t\t\tCOALESCE(TRY_CAST(STRPTIME(`Liefertermin`, '%d.%m.%Y') AS DATE), TRY_CAST(`Liefertermin` AS DATE)) AS LTag,\n\t\t\t'' AS Menge FROM data) \n\t\tWHERE date_diff('day', LTag, current_date) <= {{ tage }}\n\t\t\tAND `Artikel-Nr.` NOT LIKE '95-10-%'\n\t\t\tAND `Artikel-Nr.` NOT LIKE 'EKP'\n\t\t\tAND `Artikel-Nr.` NOT LIKE '99-99-99-100000'\n\t\tGROUP BY `Artikel-Nr.`, `Artikel`, `Einheit`, `Menge`, `LTag`\n\t\tORDER BY `Artikel-Nr.` ASC, `LTag` ASC",
+  "renderer": "generic-table",
+  "variables": [
+    {
+      "name": "title",
+      "type": "constant",
+      "label": "title",
+      "value": "Bestellliste"
+    },
+    {
+      "name": "KdNr",
+      "type": "sql",
+      "label": "KdNr",
+      "query": "SELECT `Kunden-Nr.` FROM data"
+    },
+    {
+      "name": "KdName",
+      "type": "sql",
+      "label": "KdName",
+      "query": "SELECT `Name 1` FROM data"
+    },
+    {
+      "name": "heute",
+      "type": "sql",
+      "label": "heute",
+      "query": "SELECT strftime('%d.%m.%Y', date('now')) FROM data"
+    },
+    {
+      "name": "subtitle",
+      "type": "constant",
+      "label": "subtitle",
+      "value": "Kundenbestellliste für [{{ KdNr }}] {{ KdName }}\nErzeugt am {{ heute }}"
+    },
+    {
+      "name": "htmlinput",
+      "type": "constant",
+      "label": "htmlinput",
+      "value": ""
+    },
+    {
+      "name": "tage",
+      "type": "userText",
+      "label": "Anzahl Tage für Historie:"
+    }
+  ],
+  "additional_sources": [],
+  "groups": [],
+  "options": {
+    "show_header": true,
+    "show_page_numbers": true,
+    "compact_margins": false,
+    "legacy_template": "templates/tableWithHeader.html",
+    "layout": "branded-table"
+  },
+  "legacy_source": "kundenbestellzettel.rpt"
+}

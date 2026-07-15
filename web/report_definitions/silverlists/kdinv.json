@@ -1,0 +1,63 @@
+{
+  "key": "kdinv",
+  "name": "Kunden-Inventurliste",
+  "description": "Inventurliste mit allen bezogenen Artikeln im Zeitraum.",
+  "export_source": "Controlling / Kunden-Artikel-Statistik",
+  "export_instructions": "In SilverERP Controlling / Kunden-Artikel-Statistik öffnen und die angezeigte Liste als CSV exportieren.",
+  "required_columns": [
+    "Suchbegriff",
+    "Kunden-Nr.",
+    "Artikel-Nr.",
+    "Gruppe",
+    "Umsatz",
+    "Druchschnittspreis",
+    "Menge",
+    "Einheit",
+    "Bezeichnung 1",
+    "Bezeichnung 2",
+    "Ursprungsland",
+    "Zolltarif-Nr.",
+    "Präferenzbegünstigt",
+    "Sach-Nr.",
+    "Pfad",
+    "G-Bezeichnung",
+    "Name 1",
+    "Name 2",
+    "Land",
+    "PLZ",
+    "Ort",
+    "Telefon 1",
+    "Straße"
+  ],
+  "query": "SELECT `Artikel-Nr.`, `Bezeichnung 1` AS 'Artikel', CASE WHEN {{ preiseZeigen }} THEN `Druchschnittspreis` ELSE '---' END AS '∅-Preis', `Einheit`, '' AS 'Menge' \n\t\tFROM data WHERE TRY_CAST(REPLACE(REPLACE(`Menge`, '.', ''), ',', '.') AS DOUBLE) <> 0",
+  "renderer": "generic-table",
+  "variables": [
+    {
+      "name": "title",
+      "type": "constant",
+      "label": "title",
+      "value": "Kunden-Inventurliste"
+    },
+    {
+      "name": "subtitle",
+      "type": "sql",
+      "label": "subtitle",
+      "query": "SELECT printf('[%s] %s', `Kunden-Nr.`, `Name 1`) FROM data"
+    },
+    {
+      "name": "preiseZeigen",
+      "type": "userBool",
+      "label": "Preise anzeigen?"
+    }
+  ],
+  "additional_sources": [],
+  "groups": [],
+  "options": {
+    "show_header": true,
+    "show_page_numbers": true,
+    "compact_margins": false,
+    "legacy_template": "templates/tableWithHeader.html",
+    "layout": "branded-table"
+  },
+  "legacy_source": "kdinv.rpt"
+}

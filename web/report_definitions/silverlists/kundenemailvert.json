@@ -1,0 +1,56 @@
+{
+  "key": "kundenemailvert",
+  "name": "Angebot (Mail)",
+  "description": "...",
+  "export_source": "Stammdaten / Preislisten-Definition",
+  "export_instructions": "In SilverERP Stammdaten / Preislisten-Definition öffnen und die angezeigte Liste als CSV exportieren.",
+  "required_columns": [
+    "Suchbegriff",
+    "Kunden-Nr.",
+    "Name 1",
+    "Name 2",
+    "Land",
+    "PLZ",
+    "Ort",
+    "Telefon 1",
+    "Straße",
+    "Zusatz 1",
+    "Zusatz 2",
+    "PLZ-Postfach",
+    "Postfach",
+    "Telefon 2",
+    "Mobilnummer 1",
+    "Fax 1",
+    "Email 1",
+    "Webseite 1",
+    "Kunden-Art",
+    "Adressen-Art",
+    "c.idRecord"
+  ],
+  "query": "SELECT GROUP_CONCAT(`Email 1`, '; ') FROM data WHERE `Email 1` NOT LIKE '' AND `Kunden-Art` LIKE 'Angebot: E-Mail'",
+  "renderer": "generic-table",
+  "variables": [
+    {
+      "name": "title",
+      "type": "constant",
+      "label": "title",
+      "value": "E-Mail-Verteiler"
+    },
+    {
+      "name": "subtitle",
+      "type": "constant",
+      "label": "subtitle",
+      "value": "Diesen Text als BCC in Tobit kopieren!"
+    }
+  ],
+  "additional_sources": [],
+  "groups": [],
+  "options": {
+    "show_header": true,
+    "show_page_numbers": false,
+    "compact_margins": false,
+    "legacy_template": "templates/tableIntern.html",
+    "layout": "internal-table"
+  },
+  "legacy_source": "kundenemailvert.rpt"
+}

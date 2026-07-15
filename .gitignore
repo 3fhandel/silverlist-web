@@ -1,0 +1,11 @@
+.DS_Store
+extension/dist/
+web/.venv/
+web/.pytest_cache/
+web/__pycache__/
+web/**/*.py[cod]
+web/db.sqlite3
+web/var/
+web/tmp/
+web/output/
+web/staticfiles/

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Ordersatz</title>
+  <style>
+    @page { size: A4; margin: 18mm 10mm 16mm; }
+    body { color: #111; font: 10pt Arial, sans-serif; margin: 0; }
+    h1 { margin: 0 0 3mm; }
+    .meta { color: #555; margin-bottom: 8mm; }
+    table { border-collapse: collapse; table-layout: fixed; width: 100%; }
+    th, td { border-bottom: .2mm solid #bbb; padding: 1.6mm 1mm; vertical-align: top; }
+    th { background: #e6e6e6; text-align: left; }
+    .group th { background: #555; color: white; font-size: 12pt; padding: 2mm; }
+    .article-number { width: 17%; }
+    .unit { width: 10%; }
+    .price { text-align: right; width: 13%; }
+    .quantity { width: 18%; }
+    .quantity-line { border-bottom: .3mm solid #333; display: block; min-height: 4mm; }
+    thead { display: table-header-group; }
+    tr { break-inside: avoid; }
+  </style>
+</head>
+<body>
+  <h1>Ordersatz</h1>
+  <div class="meta">{{ position_count }} Artikel · erstellt am {% now "d.m.Y H:i" %}</div>
+  <table>
+    {% for group, positions in groups %}
+      <tbody>
+        <tr class="group"><th colspan="5">{{ group }}</th></tr>
+        <tr>
+          <th class="article-number">Art.-Nr.</th><th>Artikel</th>
+          <th class="unit">Einheit</th><th class="price">Preis</th>
+          <th class="quantity">Bestellmenge</th>
+        </tr>
+        {% for position in positions %}
+          <tr>
+            <td>{{ position.Artikelnummer }}</td>
+            <td>{{ position.Bezeichnung }}</td>
+            <td>{{ position.Einheit }}</td>
+            <td class="price">{{ position.Preis }}</td>
+            <td><span class="quantity-line"></span></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    {% endfor %}
+  </table>
+</body>
+</html>
+

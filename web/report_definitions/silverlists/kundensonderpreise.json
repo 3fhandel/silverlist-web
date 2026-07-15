@@ -1,0 +1,73 @@
+{
+  "key": "kundensonderpreise",
+  "name": "Kundensonderpreisliste",
+  "description": "Kundensonderpreise. Momentan müssen KdNr und Name händisch eingegeben werden... Sorry!",
+  "export_source": "Kundenstamm / Kundenartikel",
+  "export_instructions": "In SilverERP Kundenstamm / Kundenartikel öffnen und die angezeigte Liste als CSV exportieren.",
+  "required_columns": [
+    "Artikel-Nr.",
+    "Bezeichnung 1",
+    "Kd.-Artikel-Nr.",
+    "Preis",
+    "Währung",
+    "Rabatt",
+    "EK-Kalk",
+    "Ab Menge",
+    "S.-Einheit",
+    "Kd.-Bezeichnung 4",
+    "Gültig ab",
+    "Gültig bis",
+    "Referenz",
+    "Suchbegriff",
+    "Bezeichnung 2",
+    "Bezeichnung 3",
+    "Bezeichnung 4",
+    "EK-Mittel",
+    "Archiv Artikel",
+    "s.idCustomer",
+    "s.idArticle",
+    "p.idArticle",
+    "p.bvReduction"
+  ],
+  "query": "SELECT `Artikel-Nr.`, `Bezeichnung 1` AS Bezeichnung,\n\t\t`Preis` AS 'Preis', `S.-Einheit` AS 'Einheit', `Gültig ab`, '' AS Menge FROM data \n\t\tWHERE SUBSTR(`Gültig ab`, 7, 4) || '-' || SUBSTR(`Gültig ab`, 4, 2) || '-' || SUBSTR(`Gültig ab`, 1, 2) >= '{{ AbDatum }}'\n\t\tORDER BY `Artikel-Nr.` ASC",
+  "renderer": "generic-table",
+  "variables": [
+    {
+      "name": "KdNr",
+      "type": "userText",
+      "label": "Kundennummer:"
+    },
+    {
+      "name": "KdName",
+      "type": "userText",
+      "label": "Kundenname"
+    },
+    {
+      "name": "AbDatum",
+      "type": "userText",
+      "label": "Ab Datum (Format: YYYY-MM-DD)"
+    },
+    {
+      "name": "title",
+      "type": "constant",
+      "label": "title",
+      "value": "Artikelpreisliste"
+    },
+    {
+      "name": "subtitle",
+      "type": "constant",
+      "label": "subtitle",
+      "value": "Sonderpreise für [{{ KdNr }}] {{ KdName }}"
+    }
+  ],
+  "additional_sources": [],
+  "groups": [],
+  "options": {
+    "show_header": true,
+    "show_page_numbers": true,
+    "compact_margins": false,
+    "legacy_template": "templates/tableWithHeader.html",
+    "layout": "branded-table"
+  },
+  "legacy_source": "kundensonderpreise.rpt"
+}

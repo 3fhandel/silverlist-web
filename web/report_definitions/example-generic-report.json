@@ -1,0 +1,10 @@
+{
+  "key": "example-generic-report",
+  "name": "Beispielbericht (noch nicht produktiv)",
+  "description": "Entwicklungsvorlage für einfache SQL-Berichte.",
+  "export_source": "Beispiel → nicht produktiv",
+  "export_instructions": "Diese Definition dient nur als Vorlage.",
+  "required_columns": ["__example_only__"],
+  "query": "SELECT * FROM data",
+  "renderer": "generic-table"
+}

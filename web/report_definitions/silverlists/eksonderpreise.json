@@ -1,0 +1,62 @@
+{
+  "key": "eksonderpreise",
+  "name": "EK Sonderpreise",
+  "description": "Liste für Manuel und Heiko. ;)",
+  "export_source": "Gespeicherte Abfragen",
+  "export_instructions": "In SilverERP Gespeicherte Abfragen öffnen und die angezeigte Liste als CSV exportieren.",
+  "required_columns": [
+    "Artikel-Nr.",
+    "Suchbegriff",
+    "Beschreibung 1",
+    "EK-Mittel",
+    "EK-Kalk",
+    "Letzter EK",
+    "Listenpreis",
+    "VK 1",
+    "VK 2",
+    "VK 3",
+    "VK 4",
+    "Kunden-Nr.",
+    "Name1",
+    "Kundenpreis",
+    "Kundenrabbat",
+    "Menge",
+    "Prozent von EK-Kalk",
+    "Währung",
+    "Gültig ab",
+    "Gültig bis"
+  ],
+  "query": "SELECT '[' || `Artikel-Nr.` || '] ' || `Beschreibung 1` || ' (VK1 = ' || REPLACE(`VK 1`, '.', ',') || ')' AS AID, `Kunden-Nr.` AS 'KdNr', `Name1` AS 'Name', \n\t\tREPLACE(`EK-Kalk`, '.', ',') AS 'EK-kalk', REPLACE(`Kundenpreis`, '.', ',') AS 'KdPr', (`Prozent von EK-Kalk` || '%') AS 'Spanne'\n        FROM data WHERE TRY_CAST(REPLACE(REPLACE(`Kundenpreis`, '.', ''), ',', '.') AS DOUBLE) <> 0 ORDER BY `Artikel-Nr.` ASC",
+  "renderer": "grouped-table",
+  "variables": [
+    {
+      "name": "title",
+      "type": "constant",
+      "label": "title",
+      "value": "EK-Änderungen Kundensonderpreise"
+    },
+    {
+      "name": "subtitle",
+      "type": "autoit",
+      "label": "subtitle",
+      "command": "'Export-Zeitstempel: ' & @MDAY & '.' & @MON & '.' & @YEAR & ', ' & @HOUR & ':' & @MIN & ':' & @SEC"
+    }
+  ],
+  "additional_sources": [],
+  "groups": [
+    {
+      "column": "AID",
+      "show_column": false,
+      "page_break": false,
+      "repeat_header": false
+    }
+  ],
+  "options": {
+    "show_header": true,
+    "show_page_numbers": true,
+    "compact_margins": false,
+    "legacy_template": "templates/tableIntern.html",
+    "layout": "internal-table"
+  },
+  "legacy_source": "eksonderpreise.rpt"
+}
