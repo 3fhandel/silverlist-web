@@ -113,6 +113,13 @@ Beim Start führt der Entrypoint automatisch die Django-Migrationen und
 `collectstatic` aus. Danach ist SilverLists Web über den in
 `SILVERLISTS_PORT` eingestellten Port erreichbar.
 
+Beim Image-Build liest eine separate Build-Stufe den Zeitstempel des letzten
+Git-Commits aus und schreibt ihn als `Build YYYYMMDD-hhmm` in die
+Weboberfläche. Das funktioniert auch bei einem direkt aus dem Git-Repository
+gebauten Portainer-Stack; das `.git`-Verzeichnis wird nicht in das fertige
+Runtime-Image kopiert. Mit `SILVERLISTS_BUILD` kann die Kennung bei Bedarf
+manuell überschrieben werden.
+
 Das benannte Volume `silverlists-data` enthält die SQLite-Datenbank, hochgeladene
 CSV-Dateien und erzeugte Berichte. Dieses Volume sollte regelmäßig gesichert
 werden und muss bei Stack-Updates erhalten bleiben.
@@ -143,10 +150,24 @@ SILVERLISTS_PRODUCT_IMAGE_HOST_DIR=/srv/silverlists/product-images
 SILVERLISTS_PRODUCT_IMAGE_DIR=/product-images
 ```
 
+Für kompakte Wochenangebot-PDFs werden Produktbilder nur beim Einbetten auf
+maximal 480 Pixel verkleinert und als JPEG gespeichert. Die Quelldateien bleiben
+unverändert. Bei Bedarf lassen sich Auflösung und Qualität anpassen:
+
+```dotenv
+SILVERLISTS_PRODUCT_IMAGE_MAX_PIXELS=480
+SILVERLISTS_PRODUCT_IMAGE_JPEG_QUALITY=82
+```
+
 Neue integrierte Designs liegen unter
 `web/reports/report_modules/weekly_offer_designs/<design>/`. Neben `front.jpg`
 und `back.jpg` ist lediglich ein weiterer Eintrag in `DESIGNS` in
 `weekly_offer.py` nötig; Import, Oberfläche und PDF-Renderer bleiben gleich.
+
+Das Titelmotiv des Designs **Schlachthof** stammt von Jeremy Gallagher auf
+[Unsplash](https://unsplash.com/photos/Cuiu5jbtZtI) und wird gemäß der
+[Unsplash License](https://unsplash.com/license) verwendet. Die vollständigen
+Asset-Angaben stehen in `weekly_offer_assets/STOCK_IMAGE.md`.
 
 ## Chrome-Erweiterung packen
 
