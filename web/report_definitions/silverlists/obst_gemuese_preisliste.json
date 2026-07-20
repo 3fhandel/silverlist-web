@@ -37,7 +37,7 @@
     "Wg.-Nr.",
     "Wg.-Pfad"
   ],
-  "query": "SELECT \n            `Dispo-Kennzeichen`, \n            CASE \n                WHEN `Bezeichnung 2` = 'Vorbestell-Artikel' THEN `Bezeichnung 1` || ' – Vorbestell-Artikel'\n                WHEN SUBSTR(`Bezeichnung 1`, 1, 5) = '(NEU)' THEN '(NEU) ' || SUBSTR(`Bezeichnung 1`, 6) || ' – ' || `Bezeichnung 2`\n                ELSE `Bezeichnung 1` || ' – ' || `Bezeichnung 2`\n            END AS 'Artikel',\n            `S-Einheit` AS 'ME',\n            REPLACE(PRINTF('%.3f', MAX(CAST(REPLACE(`Grundpreis`, ',', '.') AS DOUBLE) - 0.001)), '.', ',') AS 'Preis',\n            '' AS 'Menge'\n        FROM data\n        WHERE `Wg.-Pfad` <> '60-30' \n            AND `Wg.-Pfad` <> '60-40'\n        GROUP BY ALL\n        ORDER BY 1, 2",
+  "query": "SELECT \n            `Dispo-Kennzeichen`, \n            CASE \n                WHEN `Bezeichnung 2` = 'Vorbestell-Artikel' THEN `Bezeichnung 1` || ' – Vorbestell-Artikel'\n                WHEN SUBSTR(`Bezeichnung 1`, 1, 5) = '(NEU)' THEN '(NEU) ' || SUBSTR(`Bezeichnung 1`, 6) || CASE WHEN COALESCE(TRIM(`Bezeichnung 2`), '') = '' THEN '' ELSE ' – ' || `Bezeichnung 2` END\n                ELSE COALESCE(`Bezeichnung 1`, '') || CASE WHEN COALESCE(TRIM(`Bezeichnung 2`), '') = '' THEN '' ELSE ' – ' || `Bezeichnung 2` END\n            END AS 'Artikel',\n            `S-Einheit` AS 'ME',\n            REPLACE(PRINTF('%.3f', MAX(CAST(REPLACE(`Grundpreis`, ',', '.') AS DOUBLE) - 0.001)), '.', ',') AS 'Preis',\n            '' AS 'Menge'\n        FROM data\n        WHERE `Wg.-Pfad` <> '60-30' \n            AND `Wg.-Pfad` <> '60-40'\n        GROUP BY ALL\n        ORDER BY 1, 2",
   "renderer": "grouped-table",
   "variables": [
     {

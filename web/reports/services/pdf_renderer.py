@@ -173,10 +173,166 @@ def render_ordersatz_pdf(groups: Iterable, position_count: int) -> bytes:
     return buffer.getvalue()
 
 
+def render_two_column_pricelist_pdf(definition, result) -> bytes:
+    """Kompakte Preisliste mit gemeinsamem Kopf und zwei fließenden Spalten."""
+    buffer = BytesIO()
+    document = BaseDocTemplate(
+        buffer, pagesize=A4,
+        title=str(result.variables.get("title", definition.name)),
+        author="3F Handelsgesellschaft mbH",
+    )
+    horizontal_margin, column_gap = 12 * mm, 0
+    bottom, content_top = 15 * mm, A4[1] - 73 * mm
+    column_width = (A4[0] - 2 * horizontal_margin - column_gap) / 2
+    frames = [
+        Frame(
+            horizontal_margin, bottom, column_width, content_top - bottom,
+            leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0,
+        ),
+        Frame(
+            horizontal_margin + column_width + column_gap, bottom,
+            column_width, content_top - bottom,
+            leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0,
+        ),
+    ]
+
+    def decorate(canvas, doc):
+        canvas.saveState()
+        header = _asset("header.png")
+        if header.exists():
+            canvas.drawImage(
+                str(header), 14 * mm, A4[1] - 52 * mm,
+                182 * mm, 41.2 * mm, mask="auto", preserveAspectRatio=True,
+            )
+        canvas.setFillColor(INK)
+        canvas.setFont("Helvetica-Bold", 16)
+        canvas.drawString(
+            horizontal_margin, A4[1] - 59 * mm,
+            str(result.variables.get("title", definition.name)),
+        )
+        subtitle = result.variables.get("subtitle")
+        if subtitle:
+            canvas.setFillColor(colors.HexColor("#5F6B7A"))
+            canvas.setFont("Helvetica", 7.5)
+            canvas.drawRightString(
+                A4[0] - horizontal_margin, A4[1] - 59 * mm, str(subtitle),
+            )
+        canvas.setStrokeColor(BLUE)
+        canvas.setLineWidth(1.1)
+        canvas.line(
+            horizontal_margin, A4[1] - 64 * mm,
+            A4[0] - horizontal_margin, A4[1] - 64 * mm,
+        )
+        canvas.setFillColor(colors.HexColor("#667085"))
+        canvas.setFont("Helvetica", 7)
+        canvas.drawString(horizontal_margin, 8 * mm, "3F Handelsgesellschaft mbH")
+        canvas.drawRightString(A4[0] - horizontal_margin, 8 * mm, f"Seite {doc.page}")
+        canvas.restoreState()
+
+    document.addPageTemplates(PageTemplate(
+        id="two-column-pricelist", frames=frames, onPage=decorate,
+    ))
+
+    styles = getSampleStyleSheet()
+    cell = ParagraphStyle(
+        "TwoColumnPriceCell", parent=styles["BodyText"],
+        fontSize=6.4, leading=7.6, textColor=INK,
+    )
+    cell_header = ParagraphStyle(
+        "TwoColumnPriceHeader", parent=cell, fontName="Helvetica-Bold",
+        fontSize=6, leading=7,
+    )
+    group_style = ParagraphStyle(
+        "TwoColumnPriceGroup", parent=cell, fontName="Helvetica-Bold",
+        fontSize=8, leading=9.5, textColor=colors.white,
+    )
+    right = ParagraphStyle("TwoColumnPriceRight", parent=cell, alignment=TA_RIGHT)
+    center = ParagraphStyle("TwoColumnPriceCenter", parent=cell, alignment=TA_CENTER)
+    badge = ParagraphStyle(
+        "TwoColumnPriceBadge", parent=center, fontName="Helvetica-Bold",
+        fontSize=5.5, leading=6.5, textColor=colors.white,
+    )
+
+    options = definition.options or {}
+    group_columns = [group["column"] for group in definition.groups]
+    hidden_columns = set(options.get("hidden_columns", ()))
+    visible_columns = [
+        column for column in result.columns
+        if column not in group_columns and column not in hidden_columns
+    ]
+    indexes = {column: result.columns.index(column) for column in result.columns}
+    configured_widths = options.get("column_width_weights", {})
+    weights = [float(configured_widths.get(column, 1)) for column in visible_columns]
+    weight_total = sum(weights) or 1
+    widths = [column_width * weight / weight_total for weight in weights]
+
+    grouped = OrderedDict()
+    if group_columns:
+        group_index = result.columns.index(group_columns[0])
+        for row in result.rows:
+            grouped.setdefault(row[group_index], []).append(row)
+    else:
+        grouped[""] = list(result.rows)
+
+    story = []
+    show_header = options.get("show_header", True)
+    for group, rows in grouped.items():
+        data = [[_paragraph(group, group_style), *([""] * (len(visible_columns) - 1))]]
+        if show_header:
+            data.append([
+                _paragraph("" if column == "VB" else column, cell_header)
+                for column in visible_columns
+            ])
+        for row in rows:
+            rendered = []
+            for column in visible_columns:
+                style = badge if column == "VB" else right if column == "Preis" else center if column in {"ME", "Menge"} else cell
+                rendered.append(_paragraph(row[indexes[column]], style))
+            data.append(rendered)
+        repeated_rows = 2 if show_header else 1
+        table = Table(
+            data, colWidths=widths, repeatRows=repeated_rows,
+            hAlign="LEFT", splitByRow=1,
+        )
+        commands = [
+            ("SPAN", (0, 0), (-1, 0)),
+            ("BACKGROUND", (0, 0), (-1, 0), BLUE),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 2.5),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 2.5),
+            ("TOPPADDING", (0, 0), (-1, -1), 2.2),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 2.2),
+            ("ROWBACKGROUNDS", (0, repeated_rows), (-1, -1), [colors.white, colors.HexColor("#F3F6F8")]),
+            ("LINEBELOW", (0, repeated_rows), (-1, -1), .25, colors.HexColor("#CBD3DC")),
+        ]
+        if show_header:
+            commands.extend([
+                ("BACKGROUND", (0, 1), (-1, 1), LIGHT),
+                ("LINEBELOW", (0, 1), (-1, 1), .45, colors.HexColor("#AEB9C6")),
+            ])
+        if "VB" in visible_columns:
+            badge_column = visible_columns.index("VB")
+            first_data_row = repeated_rows
+            for row_offset, row in enumerate(rows):
+                if str(row[indexes["VB"]]).strip():
+                    table_row = first_data_row + row_offset
+                    commands.extend([
+                        ("BACKGROUND", (badge_column, table_row), (badge_column, table_row), colors.HexColor("#D97706")),
+                        ("BOX", (badge_column, table_row), (badge_column, table_row), .4, colors.white),
+                    ])
+        table.setStyle(TableStyle(commands))
+        story.append(table)
+
+    document.build(story)
+    return buffer.getvalue()
+
+
 def render_generic_pdf(definition, result) -> bytes:
     buffer = BytesIO()
     page_size = A4
     layout = (definition.options or {}).get("layout", "standard-table")
+    if layout == "two-column-pricelist":
+        return render_two_column_pricelist_pdf(definition, result)
     if layout == "internal-table":
         profile = "internal"
     elif layout in {"pricelist", "private-pricelist"}:

@@ -1,0 +1,79 @@
+{
+  "key": "obst-gemuese-preisliste-zweispaltig",
+  "name": "Preisliste Obst/Gemüse (zweispaltig)",
+  "description": "Platzsparende zweispaltige Variante der Obst- und Gemüsepreisliste.",
+  "export_source": "Stammdaten / [D] Artikelpreise",
+  "export_instructions": "In SilverERP Stammdaten / [D] Artikelpreise öffnen und die angezeigte Liste als CSV exportieren.",
+  "required_columns": [
+    "Artikel-Nr.",
+    "Suchbegriff",
+    "Bezeichnung 1",
+    "Bezeichnung 2",
+    "Ab Menge",
+    "Grundpreis",
+    "Währung",
+    "Preis-Info",
+    "Rabatt",
+    "Rabatt2",
+    "Rabatt3",
+    "Endpreis",
+    "Mwst",
+    "Endpreis Brutto",
+    "Bruttopreis",
+    "Rabattierbar",
+    "S-Einheit",
+    "V-Einheit",
+    "PE",
+    "VE",
+    "EK-Kalk",
+    "EK-Mittel",
+    "Letzter EK",
+    "Datum letzter EK",
+    "Skontofähig",
+    "Provisionsfähig",
+    "Provisionssatz",
+    "Wiederbeschaffungszeit",
+    "Dispo-Kennzeichen",
+    "Wg.-Nr.",
+    "Wg.-Pfad"
+  ],
+  "query": "SELECT \n            `Dispo-Kennzeichen`, \n            CASE \n                WHEN `Bezeichnung 2` = 'Vorbestell-Artikel' THEN COALESCE(`Bezeichnung 1`, '')\n                WHEN SUBSTR(`Bezeichnung 1`, 1, 5) = '(NEU)' THEN '(NEU) ' || SUBSTR(`Bezeichnung 1`, 6) || CASE WHEN COALESCE(TRIM(`Bezeichnung 2`), '') = '' THEN '' ELSE ' – ' || `Bezeichnung 2` END\n                ELSE COALESCE(`Bezeichnung 1`, '') || CASE WHEN COALESCE(TRIM(`Bezeichnung 2`), '') = '' THEN '' ELSE ' – ' || `Bezeichnung 2` END\n            END AS 'Artikel',\n            CASE WHEN `Bezeichnung 2` = 'Vorbestell-Artikel' THEN 'VB' ELSE '' END AS 'VB',\n            `S-Einheit` AS 'ME',\n            REPLACE(PRINTF('%.3f', MAX(CAST(REPLACE(`Grundpreis`, ',', '.') AS DOUBLE) - 0.001)), '.', ',') AS 'Preis',\n            '' AS 'Menge'\n        FROM data\n        WHERE `Wg.-Pfad` <> '60-30' \n            AND `Wg.-Pfad` <> '60-40'\n        GROUP BY 1, 2, 3, 4, 6\n        ORDER BY REPLACE(REPLACE(REPLACE(REPLACE(LOWER(`Dispo-Kennzeichen`), 'ä', 'a'), 'ö', 'o'), 'ü', 'u'), 'ß', 'ss'), REPLACE(REPLACE(REPLACE(REPLACE(LOWER(Artikel), 'ä', 'a'), 'ö', 'o'), 'ü', 'u'), 'ß', 'ss')",
+  "renderer": "grouped-table",
+  "variables": [
+    {
+      "name": "title",
+      "type": "constant",
+      "label": "title",
+      "value": "Preisliste Obst/Gemüse"
+    },
+    {
+      "name": "subtitle",
+      "type": "autoit",
+      "label": "subtitle",
+      "command": "'Stand ' & @MDAY & '.' & @MON & '.' & @YEAR & ', ' & @HOUR & ':' & @MIN & ':' & @SEC"
+    }
+  ],
+  "additional_sources": [],
+  "groups": [
+    {
+      "column": "Dispo-Kennzeichen",
+      "show_column": false,
+      "page_break": false,
+      "repeat_header": true
+    }
+  ],
+  "options": {
+    "show_header": true,
+    "show_page_numbers": true,
+    "compact_margins": true,
+    "layout": "two-column-pricelist",
+    "column_width_weights": {
+      "Artikel": 5.2,
+      "VB": 0.55,
+      "ME": 0.8,
+      "Preis": 1.25,
+      "Menge": 1.15
+    }
+  },
+  "legacy_source": "obst_gemuese_preisliste.rpt"
+}
