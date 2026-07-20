@@ -9,12 +9,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 def build_identifier() -> str:
-    override = os.getenv("SILVERLISTS_BUILD", "").strip()
-    if override:
-        return override.removeprefix("Build ").strip()
-    build_file = BASE_DIR / "BUILD"
-    if build_file.exists():
-        return build_file.read_text(encoding="utf-8").strip()
     try:
         return subprocess.check_output(
             [
@@ -26,6 +20,9 @@ def build_identifier() -> str:
             stderr=subprocess.DEVNULL,
         ).strip()
     except (FileNotFoundError, subprocess.CalledProcessError):
+        build_file = BASE_DIR / ".silverlists-build-version"
+        if build_file.exists():
+            return build_file.read_text(encoding="utf-8").strip()
         return "development"
 
 

@@ -1,7 +1,18 @@
-FROM alpine/git@sha256:77418e6e7c7f434c4a98eaff04ef16840cf03649c881c03948e3e213923e3136 AS build-metadata
+FROM python:3.13-slim AS build-metadata
 
-COPY .git /repo/.git
-RUN git --git-dir=/repo/.git log -1 --format='%cd' --date=format:'%Y%m%d-%H%M' > /build-info
+WORKDIR /build
+
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y git \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY . ./
+
+RUN if [ -d .git ]; then \
+        git log -1 --format=%cd --date=format:%Y%m%d-%H%M > .silverlists-build-version; \
+    else \
+        date -u +%Y%m%d-%H%M > .silverlists-build-version; \
+    fi
 
 FROM python:3.13-slim AS runtime
 
@@ -24,7 +35,7 @@ COPY web/templates /app/templates
 COPY web/report_definitions /app/report_definitions
 COPY web/manage.py web/docker-entrypoint.sh /app/
 COPY web/assets /app/assets
-COPY --from=build-metadata /build-info /app/BUILD
+COPY --from=build-metadata /build/.silverlists-build-version /app/.silverlists-build-version
 
 RUN pip install --no-cache-dir . \
     && chmod +x /app/docker-entrypoint.sh \

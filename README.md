@@ -113,12 +113,11 @@ Beim Start führt der Entrypoint automatisch die Django-Migrationen und
 `collectstatic` aus. Danach ist SilverLists Web über den in
 `SILVERLISTS_PORT` eingestellten Port erreichbar.
 
-Beim Image-Build liest eine separate Build-Stufe den Zeitstempel des letzten
-Git-Commits aus und schreibt ihn als `Build YYYYMMDD-hhmm` in die
-Weboberfläche. Das funktioniert auch bei einem direkt aus dem Git-Repository
-gebauten Portainer-Stack; das `.git`-Verzeichnis wird nicht in das fertige
-Runtime-Image kopiert. Mit `SILVERLISTS_BUILD` kann die Kennung bei Bedarf
-manuell überschrieben werden.
+Die Weboberfläche zeigt neben dem Logo den letzten Git-Commit als
+`Build YYYYMMDD-hhmm`. Eine eigene Docker-Build-Stufe ermittelt den Zeitpunkt
+direkt aus dem Git-Checkout und übernimmt ausschließlich die fertige Kennung in
+das Laufzeit-Image. Dafür ist keine Umgebungsvariable erforderlich. Das
+entspricht dem Build-Metadaten-Verfahren aus `doksio`.
 
 Das benannte Volume `silverlists-data` enthält die SQLite-Datenbank, hochgeladene
 CSV-Dateien und erzeugte Berichte. Dieses Volume sollte regelmäßig gesichert
