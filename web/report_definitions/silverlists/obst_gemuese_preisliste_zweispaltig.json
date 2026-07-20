@@ -67,6 +67,12 @@
     "show_page_numbers": true,
     "compact_margins": true,
     "layout": "two-column-pricelist",
+    "list_notices": [
+      "Alle Preise freibleibend.",
+      "Aufgrund des tagesaktuellen Einkaufs können einzelne Artikel kurzfristig nicht verfügbar sein.",
+      "VB = Vorbestell-Artikel."
+    ],
+    "closing_notice": "Obst und Gemüse umfasst ein besonders vielfältiges Sortiment, das sich in einer kompakten Liste nicht vollständig abbilden lässt. Weitere Artikel sind grundsätzlich auf Anfrage erhältlich.",
     "column_width_weights": {
       "Artikel": 5.2,
       "VB": 0.7,

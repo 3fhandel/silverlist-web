@@ -182,16 +182,29 @@ def render_two_column_pricelist_pdf(definition, result) -> bytes:
         author="3F Handelsgesellschaft mbH",
     )
     horizontal_margin, column_gap = 12 * mm, 0
-    bottom, content_top = 15 * mm, A4[1] - 73 * mm
+    bottom = 15 * mm
+    regular_content_top = A4[1] - 73 * mm
+    first_content_top = A4[1] - 78 * mm
     column_width = (A4[0] - 2 * horizontal_margin - column_gap) / 2
-    frames = [
+    first_frames = [
         Frame(
-            horizontal_margin, bottom, column_width, content_top - bottom,
+            horizontal_margin, bottom, column_width, first_content_top - bottom,
             leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0,
         ),
         Frame(
             horizontal_margin + column_width + column_gap, bottom,
-            column_width, content_top - bottom,
+            column_width, first_content_top - bottom,
+            leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0,
+        ),
+    ]
+    later_frames = [
+        Frame(
+            horizontal_margin, bottom, column_width, regular_content_top - bottom,
+            leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0,
+        ),
+        Frame(
+            horizontal_margin + column_width + column_gap, bottom,
+            column_width, regular_content_top - bottom,
             leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0,
         ),
     ]
@@ -223,15 +236,40 @@ def render_two_column_pricelist_pdf(definition, result) -> bytes:
             horizontal_margin, A4[1] - 64 * mm,
             A4[0] - horizontal_margin, A4[1] - 64 * mm,
         )
+        if doc.page == 1:
+            notice_style = ParagraphStyle(
+                "TwoColumnNotice", fontName="Helvetica", fontSize=7,
+                leading=8.5, textColor=colors.HexColor("#4B5563"),
+            )
+            notice = _paragraph(
+                "   ·   ".join((definition.options or {}).get("list_notices", ())),
+                notice_style,
+            )
+            _, notice_height = notice.wrapOn(
+                canvas, A4[0] - 2 * horizontal_margin, 12 * mm,
+            )
+            notice.drawOn(
+                canvas, horizontal_margin, A4[1] - 68 * mm - notice_height,
+            )
         canvas.setFillColor(colors.HexColor("#667085"))
         canvas.setFont("Helvetica", 7)
-        canvas.drawString(horizontal_margin, 8 * mm, "3F Handelsgesellschaft mbH")
+        canvas.drawString(
+            horizontal_margin, 8 * mm,
+            "3F Handelsgesellschaft mbH · Ederstraße 72 · 57319 Bad Berleburg",
+        )
         canvas.drawRightString(A4[0] - horizontal_margin, 8 * mm, f"Seite {doc.page}")
         canvas.restoreState()
 
-    document.addPageTemplates(PageTemplate(
-        id="two-column-pricelist", frames=frames, onPage=decorate,
-    ))
+    document.addPageTemplates([
+        PageTemplate(
+            id="two-column-pricelist-first", frames=first_frames,
+            onPage=decorate, autoNextPageTemplate="two-column-pricelist-later",
+        ),
+        PageTemplate(
+            id="two-column-pricelist-later", frames=later_frames,
+            onPage=decorate,
+        ),
+    ])
 
     styles = getSampleStyleSheet()
     cell = ParagraphStyle(
@@ -323,6 +361,17 @@ def render_two_column_pricelist_pdf(definition, result) -> bytes:
                     ])
         table.setStyle(TableStyle(commands))
         story.append(table)
+
+    closing_notice = options.get("closing_notice")
+    if closing_notice:
+        story.extend([
+            Spacer(1, 2 * mm),
+            _paragraph(closing_notice, ParagraphStyle(
+                "TwoColumnClosingNotice", parent=cell,
+                fontName="Helvetica-Oblique", fontSize=6.5, leading=8,
+                textColor=colors.HexColor("#4B5563"),
+            )),
+        ])
 
     document.build(story)
     return buffer.getvalue()

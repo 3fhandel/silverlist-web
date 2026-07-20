@@ -42,6 +42,9 @@ def test_two_column_pricelist_is_an_additional_matching_report():
 
     assert fallback.options["layout"] == "pricelist"
     assert compact.options["layout"] == "two-column-pricelist"
+    assert len(compact.options["list_notices"]) == 3
+    assert "VB = Vorbestell-Artikel." in compact.options["list_notices"]
+    assert "Weitere Artikel" in compact.options["closing_notice"]
     assert compact.required_columns == fallback.required_columns
 
     matches = {
