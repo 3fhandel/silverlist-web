@@ -1,0 +1,71 @@
+{
+  "key": "preisaenderungen-lieferanten",
+  "name": "Preisänderungen Lieferantenartikel",
+  "description": "Zeigt Änderungen der Einkaufspreise für Lieferantenartikel einschließlich relativer Abweichung.",
+  "export_source": "Controlling / Gesp. Abfragen / Preise",
+  "export_instructions": "In SilverERP Controlling / Gesp. Abfragen / Preise öffnen und die angezeigte Liste als CSV exportieren.",
+  "required_columns": [
+    "Artikel-Nr.",
+    "Suchbegriff",
+    "Bezeichnung 1",
+    "Typ",
+    "Referenz",
+    "Zeitpunkt",
+    "Benutzer",
+    "Ab Menge",
+    "Preis",
+    "Preis neu",
+    "Währung"
+  ],
+  "query": "WITH prepared AS (\n        SELECT *,\n          CAST(`Zeitpunkt` AS BIGINT) AS silver_timestamp,\n          (CAST(`Zeitpunkt` AS DOUBLE) - 7900000000000) / 1000000000 AS x\n        FROM data\n        WHERE `Typ` = 'supplierArticle'\n      )\n      SELECT\n        `Artikel-Nr.` || chr(10) || `Bezeichnung 1` AS 'Artikel',\n        `Referenz` AS 'Lieferant',\n        STRFTIME(\n          TIMESTAMP '2000-01-01 00:00:00'\n            + (14.2926176 * POWER(x, 4) + 1546.80544 * POWER(x, 3) - 26762.5368 * POWER(x, 2) + 7762978.55 * x + 669577867) * INTERVAL '1 second',\n          '%d.%m.%Y %H:%M'\n        ) AS 'Zeitpunkt',\n        `Benutzer`,\n        REPLACE(PRINTF('%.4f', CAST(REPLACE(`Preis`, ',', '.') AS DOUBLE)), '.', ',') || chr(10) || REPLACE(PRINTF('%.4f', CAST(REPLACE(`Preis`, ',', '.') AS DOUBLE) * 1.11), '.', ',') AS 'Preis alt',\n        REPLACE(PRINTF('%.4f', CAST(REPLACE(`Preis neu`, ',', '.') AS DOUBLE)), '.', ',') || chr(10) || REPLACE(PRINTF('%.4f', CAST(REPLACE(`Preis neu`, ',', '.') AS DOUBLE) * 1.11), '.', ',') AS 'Preis neu',\n        CASE\n          WHEN CAST(REPLACE(`Preis`, ',', '.') AS DOUBLE) = 0 THEN '–'\n          ELSE REPLACE(PRINTF('%+.2f %%', (CAST(REPLACE(`Preis neu`, ',', '.') AS DOUBLE) / CAST(REPLACE(`Preis`, ',', '.') AS DOUBLE) - 1) * 100), '.', ',')\n        END AS 'Rel. Änderung',\n        CASE\n          WHEN CAST(REPLACE(`Preis neu`, ',', '.') AS DOUBLE) > CAST(REPLACE(`Preis`, ',', '.') AS DOUBLE) THEN 'up'\n          WHEN CAST(REPLACE(`Preis neu`, ',', '.') AS DOUBLE) < CAST(REPLACE(`Preis`, ',', '.') AS DOUBLE) THEN 'down'\n          ELSE 'same'\n        END AS 'Änderungsrichtung'\n      FROM prepared\n      ORDER BY silver_timestamp DESC, `Artikel-Nr.`",
+  "renderer": "generic-table",
+  "variables": [
+    {
+      "name": "title",
+      "type": "constant",
+      "label": "title",
+      "value": "Preisänderungen Lieferantenartikel"
+    },
+    {
+      "name": "subtitle",
+      "type": "sql",
+      "label": "subtitle",
+      "query": "SELECT 'Auswertung vom ' || strftime('%d.%m.%Y', 'now')"
+    }
+  ],
+  "additional_sources": [],
+  "groups": [],
+  "options": {
+    "show_header": true,
+    "show_page_numbers": true,
+    "compact_margins": true,
+    "layout": "internal-table",
+    "cell_font_size": 7.0,
+    "cell_leading": 8.5,
+    "hidden_columns": ["Änderungsrichtung"],
+    "conditional_styles": [
+      {
+        "target_column": "Rel. Änderung",
+        "when_column": "Änderungsrichtung",
+        "equals": "up",
+        "style": "trend-up"
+      },
+      {
+        "target_column": "Rel. Änderung",
+        "when_column": "Änderungsrichtung",
+        "equals": "down",
+        "style": "trend-down"
+      }
+    ],
+    "column_width_weights": {
+      "Artikel": 2.8,
+      "Lieferant": 1.6,
+      "Zeitpunkt": 1.45,
+      "Benutzer": 1.15,
+      "Preis alt": 1.1,
+      "Preis neu": 1.1,
+      "Rel. Änderung": 1.15
+    }
+  },
+  "legacy_source": "frischemarkt.rpt"
+}

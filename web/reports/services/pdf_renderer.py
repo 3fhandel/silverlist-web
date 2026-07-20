@@ -88,6 +88,29 @@ def _warning_icon():
     return drawing
 
 
+def _trend_cell(value, direction, style):
+    color = colors.HexColor("#C2413B") if direction == "up" else colors.HexColor("#3A7D44")
+    drawing = Drawing(9, 10)
+    if direction == "up":
+        points = [4.5, 10, 0.5, 5.5, 3.1, 5.5, 3.1, 0, 5.9, 0, 5.9, 5.5, 8.5, 5.5]
+    else:
+        points = [4.5, 0, 0.5, 4.5, 3.1, 4.5, 3.1, 10, 5.9, 10, 5.9, 4.5, 8.5, 4.5]
+    drawing.add(Polygon(points, fillColor=color, strokeColor=None))
+    table = Table(
+        [[drawing, _paragraph(value, style)]],
+        colWidths=[4 * mm, 15 * mm],
+        hAlign="LEFT",
+    )
+    table.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ("TOPPADDING", (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+    ]))
+    return table
+
+
 def render_ordersatz_pdf(groups: Iterable, position_count: int) -> bytes:
     buffer = BytesIO()
     document = NumberedDocument(buffer, pagesize=A4, title="Ordersatz", author="3F Handelsgesellschaft mbH")
@@ -452,9 +475,16 @@ def render_generic_pdf(definition, result) -> bytes:
                             style = "warning-icon"
                         elif rule.get("style") == "bold-italic":
                             style = cell_bold_italic
+                        elif rule.get("style") in {"trend-up", "trend-down"}:
+                            style = rule["style"]
                         break
                 rendered.append(
                     _warning_icon() if style == "warning-icon"
+                    else _trend_cell(
+                        row[indexes_by_column[column]],
+                        "up" if style == "trend-up" else "down",
+                        cell,
+                    ) if style in {"trend-up", "trend-down"}
                     else _paragraph(row[indexes_by_column[column]], style)
                 )
             data.append(rendered)

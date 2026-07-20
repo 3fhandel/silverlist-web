@@ -1,10 +1,32 @@
 import os
 from pathlib import Path
+import subprocess
 from urllib.parse import urlsplit
 
 from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def build_identifier() -> str:
+    override = os.getenv("SILVERLISTS_BUILD", "").strip()
+    if override:
+        return override.removeprefix("Build ").strip()
+    build_file = BASE_DIR / "BUILD"
+    if build_file.exists():
+        return build_file.read_text(encoding="utf-8").strip()
+    try:
+        return subprocess.check_output(
+            [
+                "git", "log", "-1", "--format=%cd",
+                "--date=format:%Y%m%d-%H%M",
+            ],
+            cwd=BASE_DIR.parent,
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return "development"
 
 
 def env_bool(name: str, default: bool = False) -> bool:
@@ -17,6 +39,7 @@ def env_list(name: str, default: str = "") -> list[str]:
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "development-only-change-me")
 DEBUG = env_bool("DJANGO_DEBUG", True)
+SILVERLISTS_BUILD = build_identifier()
 SILVERLISTS_BASE_URL = os.getenv("SILVERLISTS_BASE_URL", "").strip().rstrip("/")
 if SILVERLISTS_BASE_URL:
     parsed_base_url = urlsplit(SILVERLISTS_BASE_URL)
@@ -75,6 +98,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "config.context_processors.build_info",
             ],
         },
     }

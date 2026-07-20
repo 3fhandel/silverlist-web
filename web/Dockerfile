@@ -1,3 +1,8 @@
+FROM alpine/git@sha256:77418e6e7c7f434c4a98eaff04ef16840cf03649c881c03948e3e213923e3136 AS build-metadata
+
+COPY .git /repo/.git
+RUN git --git-dir=/repo/.git log -1 --format='%cd' --date=format:'%Y%m%d-%H%M' > /build-info
+
 FROM python:3.13-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -19,6 +24,7 @@ COPY web/templates /app/templates
 COPY web/report_definitions /app/report_definitions
 COPY web/manage.py web/docker-entrypoint.sh /app/
 COPY web/assets /app/assets
+COPY --from=build-metadata /build-info /app/BUILD
 
 RUN pip install --no-cache-dir . \
     && chmod +x /app/docker-entrypoint.sh \
