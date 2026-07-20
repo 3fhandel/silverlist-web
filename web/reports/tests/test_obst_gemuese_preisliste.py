@@ -54,7 +54,7 @@ def test_two_column_pricelist_is_an_additional_matching_report():
     }.issubset(matches)
 
 
-def test_two_column_pricelist_sorts_umlauts_and_marks_preorders(tmp_path: Path):
+def test_two_column_pricelist_sorts_umlauts_and_prioritizes_new_badges(tmp_path: Path):
     definition = get_definition("obst-gemuese-preisliste-zweispaltig")
     source = tmp_path / "artikelpreise.csv"
     index = {name: position for position, name in enumerate(definition.required_columns)}
@@ -62,6 +62,8 @@ def test_two_column_pricelist_sorts_umlauts_and_marks_preorders(tmp_path: Path):
     for group, name, description_2 in (
         ("Birnen", "Birnen Conference", ""),
         ("Äpfel", "Elstar", "Vorbestell-Artikel"),
+        ("Äpfel", "(NEU) Boskoop", "Vorbestell-Artikel"),
+        ("Äpfel", "(NEU) Cox Orange", "deutsche Ware"),
     ):
         values = [""] * len(definition.required_columns)
         values[index["Bezeichnung 1"]] = name
@@ -78,9 +80,15 @@ def test_two_column_pricelist_sorts_umlauts_and_marks_preorders(tmp_path: Path):
     group_index = result.columns.index("Dispo-Kennzeichen")
     article_index = result.columns.index("Artikel")
     preorder_index = result.columns.index("VB")
-    assert [row[group_index] for row in result.rows] == ["Äpfel", "Birnen"]
+    assert [row[group_index] for row in result.rows] == [
+        "Äpfel", "Äpfel", "Äpfel", "Birnen",
+    ]
     assert [row[article_index] for row in result.rows] == [
+        "Boskoop",
+        "Cox Orange – deutsche Ware",
         "Elstar",
         "Birnen Conference",
     ]
-    assert [row[preorder_index] for row in result.rows] == ["VB", ""]
+    assert [row[preorder_index] for row in result.rows] == [
+        "NEU", "NEU", "VB", "",
+    ]

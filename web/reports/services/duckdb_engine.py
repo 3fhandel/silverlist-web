@@ -25,6 +25,7 @@ class QueryResult:
 _QUOTED_PARAMETER = re.compile(r"(['\"])\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}\1")
 _PARAMETER = re.compile(r"\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}")
 _PLACEHOLDER = re.compile(r"\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}")
+_HEADER_ALIASES = {"HL": "Hauptlieferant"}
 
 
 def _parameterize(query: str, parameters: dict[str, object]) -> tuple[str, list[object]]:
@@ -83,10 +84,21 @@ def _normalized_file(stack: ExitStack, source: str | Path):
 def _create_csv_view(connection, path: str, name: str) -> tuple[str, ...]:
     if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name):
         raise ReportInputError(f"Ungültiger Datenquellenname: {name}")
+    raw_name = f"__raw_{name}"
     connection.read_csv(
         path, delimiter=";", header=True, all_varchar=True,
         quotechar='"', auto_detect=True,
-    ).create_view(name)
+    ).create_view(raw_name)
+    raw_header = tuple(
+        row[0] for row in connection.execute(f'DESCRIBE "{raw_name}"').fetchall()
+    )
+    projections = ["*"]
+    for alias, canonical in _HEADER_ALIASES.items():
+        if alias in raw_header and canonical not in raw_header:
+            projections.append(f'"{alias}" AS "{canonical}"')
+    connection.execute(
+        f'CREATE VIEW "{name}" AS SELECT {", ".join(projections)} FROM "{raw_name}"'
+    )
     return tuple(row[0] for row in connection.execute(f'DESCRIBE "{name}"').fetchall())
 
 
@@ -128,4 +140,8 @@ def inspect_csv_header(source: str | Path) -> tuple[str, ...]:
     lines = text.splitlines()
     if not lines:
         raise ReportInputError("Die CSV-Datei ist leer.")
-    return tuple(next(csv.reader([lines[0]], delimiter=";")))
+    header = list(next(csv.reader([lines[0]], delimiter=";")))
+    for alias, canonical in _HEADER_ALIASES.items():
+        if alias in header and canonical not in header:
+            header.append(canonical)
+    return tuple(header)

@@ -316,8 +316,9 @@ def render_two_column_pricelist_pdf(definition, result) -> bytes:
             for row_offset, row in enumerate(rows):
                 if str(row[indexes["VB"]]).strip():
                     table_row = first_data_row + row_offset
+                    badge_color = GREEN if str(row[indexes["VB"]]).strip() == "NEU" else colors.HexColor("#D97706")
                     commands.extend([
-                        ("BACKGROUND", (badge_column, table_row), (badge_column, table_row), colors.HexColor("#D97706")),
+                        ("BACKGROUND", (badge_column, table_row), (badge_column, table_row), badge_color),
                         ("BOX", (badge_column, table_row), (badge_column, table_row), .4, colors.white),
                     ])
         table.setStyle(TableStyle(commands))
@@ -340,9 +341,12 @@ def render_generic_pdf(definition, result) -> bytes:
     else:
         profile = "branded"
 
+    horizontal_margin = 8 * mm if profile == "internal" else 12 * mm
     document = SimpleDocTemplate(
-        buffer, pagesize=page_size, leftMargin=12 * mm, rightMargin=12 * mm,
-        topMargin=(25 * mm if profile == "internal" else 12 * mm), bottomMargin=16 * mm,
+        buffer, pagesize=page_size,
+        leftMargin=horizontal_margin, rightMargin=horizontal_margin,
+        topMargin=(22 * mm if profile == "internal" else 12 * mm),
+        bottomMargin=(12 * mm if profile == "internal" else 16 * mm),
         title=str(result.variables.get("title", definition.name)),
         author="3F Handelsgesellschaft mbH",
     )
@@ -350,22 +354,19 @@ def render_generic_pdf(definition, result) -> bytes:
     title_style = ParagraphStyle("ReportTitle", parent=styles["Title"], fontSize=20, leading=24, textColor=INK)
     subtitle_style = ParagraphStyle("ReportSubtitle", parent=styles["BodyText"], fontSize=9, leading=12, textColor=colors.HexColor("#5F6B7A"))
     dense = len(result.columns) > 5
+    options = definition.options or {}
+    cell_font_size = float(options.get("cell_font_size", 6.5 if dense else 7.5))
+    cell_leading = float(options.get("cell_leading", 7.8 if dense else 9))
     cell = ParagraphStyle(
         "ReportCell", parent=styles["BodyText"],
-        fontSize=6.5 if dense else 7.5, leading=7.8 if dense else 9,
+        fontSize=cell_font_size, leading=cell_leading,
     )
     cell_header = ParagraphStyle("ReportCellHeader", parent=cell, fontName="Helvetica-Bold")
     cell_bold_italic = ParagraphStyle(
         "ReportCellBoldItalic", parent=cell, fontName="Helvetica-BoldOblique"
     )
     story = []
-    if profile == "internal":
-        story.append(Paragraph(
-            "3F Handelsgesellschaft mbH · Ederstraße 72 · 57319 Bad Berleburg",
-            ParagraphStyle("InternalAddress", parent=subtitle_style, alignment=TA_CENTER),
-        ))
-        story.append(Spacer(1, 4 * mm))
-    else:
+    if profile != "internal":
         header = _asset("header.png")
         if header.exists():
             story.extend([Image(str(header), width=182 * mm, height=41.2 * mm), Spacer(1, 5 * mm)])
@@ -374,7 +375,6 @@ def render_generic_pdf(definition, result) -> bytes:
         story.extend([_paragraph(result.variables["subtitle"], subtitle_style), Spacer(1, 5 * mm)])
 
     group_columns = [group["column"] for group in definition.groups]
-    options = definition.options or {}
     hidden_columns = set(options.get("hidden_columns", ()))
     visible_columns = [
         column for column in result.columns
@@ -384,7 +384,7 @@ def render_generic_pdf(definition, result) -> bytes:
         column: result.columns.index(column) for column in result.columns
     }
     conditional_styles = options.get("conditional_styles", ())
-    width = page_size[0] - 24 * mm
+    width = page_size[0] - 2 * horizontal_margin
     configured_widths = options.get("column_width_weights", {})
     weights = [float(configured_widths.get(column, 1)) for column in visible_columns]
     weight_total = sum(weights) or 1
@@ -445,16 +445,31 @@ def render_generic_pdf(definition, result) -> bytes:
             logo = _asset("3f-logo-minibw.png")
             if logo.exists():
                 canvas.drawImage(
-                    str(logo), 12 * mm, page_size[1] - 18 * mm,
-                    9 * mm, 9 * mm, mask="auto", preserveAspectRatio=True,
+                    str(logo), horizontal_margin, page_size[1] - 16 * mm,
+                    8 * mm, 8 * mm, mask="auto", preserveAspectRatio=True,
                 )
-            canvas.setStrokeColor(BLUE)
-            canvas.setLineWidth(.8)
-            canvas.line(24 * mm, page_size[1] - 15 * mm, page_size[0] - 12 * mm, page_size[1] - 15 * mm)
+            canvas.setFillColor(INK)
+            canvas.setFont("Helvetica", 7.5)
+            canvas.drawString(
+                18 * mm, page_size[1] - 11.5 * mm,
+                "3F Handelsgesellschaft mbH · Ederstraße 72 · 57319 Bad Berleburg",
+            )
+            canvas.setFillColor(colors.HexColor("#4B5563"))
+            canvas.setFont("Helvetica-Bold", 7)
+            canvas.drawRightString(
+                page_size[0] - horizontal_margin, page_size[1] - 11.5 * mm,
+                "NUR FÜR DEN INTERNEN GEBRAUCH",
+            )
+            canvas.setStrokeColor(colors.HexColor("#6B7280"))
+            canvas.setLineWidth(.6)
+            canvas.line(
+                18 * mm, page_size[1] - 18 * mm,
+                page_size[0] - horizontal_margin, page_size[1] - 18 * mm,
+            )
         canvas.setFont("Helvetica", 7)
         canvas.setFillColor(colors.HexColor("#667085"))
-        canvas.drawString(12 * mm, 8 * mm, "3F Handelsgesellschaft mbH")
-        canvas.drawRightString(page_size[0] - 12 * mm, 8 * mm, f"Seite {doc.page}")
+        canvas.drawString(horizontal_margin, 6.5 * mm, "3F Handelsgesellschaft mbH")
+        canvas.drawRightString(page_size[0] - horizontal_margin, 6.5 * mm, f"Seite {doc.page}")
         canvas.restoreState()
 
     document.build(story, onFirstPage=footer, onLaterPages=footer)

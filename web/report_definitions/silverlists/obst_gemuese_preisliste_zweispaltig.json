@@ -37,7 +37,7 @@
     "Wg.-Nr.",
     "Wg.-Pfad"
   ],
-  "query": "SELECT \n            `Dispo-Kennzeichen`, \n            CASE \n                WHEN `Bezeichnung 2` = 'Vorbestell-Artikel' THEN COALESCE(`Bezeichnung 1`, '')\n                WHEN SUBSTR(`Bezeichnung 1`, 1, 5) = '(NEU)' THEN '(NEU) ' || SUBSTR(`Bezeichnung 1`, 6) || CASE WHEN COALESCE(TRIM(`Bezeichnung 2`), '') = '' THEN '' ELSE ' – ' || `Bezeichnung 2` END\n                ELSE COALESCE(`Bezeichnung 1`, '') || CASE WHEN COALESCE(TRIM(`Bezeichnung 2`), '') = '' THEN '' ELSE ' – ' || `Bezeichnung 2` END\n            END AS 'Artikel',\n            CASE WHEN `Bezeichnung 2` = 'Vorbestell-Artikel' THEN 'VB' ELSE '' END AS 'VB',\n            `S-Einheit` AS 'ME',\n            REPLACE(PRINTF('%.3f', MAX(CAST(REPLACE(`Grundpreis`, ',', '.') AS DOUBLE) - 0.001)), '.', ',') AS 'Preis',\n            '' AS 'Menge'\n        FROM data\n        WHERE `Wg.-Pfad` <> '60-30' \n            AND `Wg.-Pfad` <> '60-40'\n        GROUP BY 1, 2, 3, 4, 6\n        ORDER BY REPLACE(REPLACE(REPLACE(REPLACE(LOWER(`Dispo-Kennzeichen`), 'ä', 'a'), 'ö', 'o'), 'ü', 'u'), 'ß', 'ss'), REPLACE(REPLACE(REPLACE(REPLACE(LOWER(Artikel), 'ä', 'a'), 'ö', 'o'), 'ü', 'u'), 'ß', 'ss')",
+  "query": "SELECT \n            `Dispo-Kennzeichen`, \n            CASE WHEN SUBSTR(COALESCE(`Bezeichnung 1`, ''), 1, 5) = '(NEU)' THEN TRIM(SUBSTR(`Bezeichnung 1`, 6)) ELSE COALESCE(`Bezeichnung 1`, '') END || CASE WHEN `Bezeichnung 2` = 'Vorbestell-Artikel' OR COALESCE(TRIM(`Bezeichnung 2`), '') = '' THEN '' ELSE ' – ' || `Bezeichnung 2` END AS 'Artikel',\n            CASE WHEN SUBSTR(COALESCE(`Bezeichnung 1`, ''), 1, 5) = '(NEU)' THEN 'NEU' WHEN `Bezeichnung 2` = 'Vorbestell-Artikel' THEN 'VB' ELSE '' END AS 'VB',\n            `S-Einheit` AS 'ME',\n            REPLACE(PRINTF('%.3f', MAX(CAST(REPLACE(`Grundpreis`, ',', '.') AS DOUBLE) - 0.001)), '.', ',') AS 'Preis',\n            '' AS 'Menge'\n        FROM data\n        WHERE `Wg.-Pfad` <> '60-30' \n            AND `Wg.-Pfad` <> '60-40'\n        GROUP BY 1, 2, 3, 4, 6\n        ORDER BY REPLACE(REPLACE(REPLACE(REPLACE(LOWER(`Dispo-Kennzeichen`), 'ä', 'a'), 'ö', 'o'), 'ü', 'u'), 'ß', 'ss'), REPLACE(REPLACE(REPLACE(REPLACE(LOWER(Artikel), 'ä', 'a'), 'ö', 'o'), 'ü', 'u'), 'ß', 'ss')",
   "renderer": "grouped-table",
   "variables": [
     {
@@ -69,7 +69,7 @@
     "layout": "two-column-pricelist",
     "column_width_weights": {
       "Artikel": 5.2,
-      "VB": 0.55,
+      "VB": 0.7,
       "ME": 0.8,
       "Preis": 1.25,
       "Menge": 1.15
