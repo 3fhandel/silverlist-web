@@ -78,7 +78,7 @@ def test_every_sql_report_executes_and_renders_pdf(definition, tmp_path):
     for source_definition in definition.additional_sources:
         name = source_definition["name"]
         path = tmp_path / f"{name}.csv"
-        write_csv(path, EXTRA_COLUMNS[name])
+        write_csv(path, source_definition.get("required_columns", EXTRA_COLUMNS.get(name, ())))
         additional[name] = path
 
     result = execute_report(

@@ -14,7 +14,7 @@ def test_all_legacy_silverlists_reports_are_registered():
         "example-generic-report", "ordersatz-vk1", "ordersatz-vk2", "ordersatz-vk3",
         "ordersatz-vk4", "ordersatz-vk5", "ordersatz-vk6", "ordersatz-ohne-preise",
     }]
-    assert len(legacy) == 25
+    assert len(legacy) == 26
 
 
 def price_list_csv() -> bytes:

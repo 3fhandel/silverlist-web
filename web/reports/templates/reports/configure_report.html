@@ -1,4 +1,23 @@
 {% extends "base.html" %}{% block title %}Bericht konfigurieren · SilverLists Web{% endblock %}
+{% block head %}<style>
+.secondary-dropzone{min-height:14rem;margin:.35rem 0 1rem;padding:1.5rem}.secondary-dropzone .drop-icon svg{width:1.5rem;height:1.5rem;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.secondary-dropzone h2{font-size:1.1rem}.field-help{display:block;margin:-.35rem 0 1rem;color:var(--muted);font-size:.88rem;line-height:1.45}.configuration-field{margin:0 0 1rem}.configuration-field>label:not(.dropzone){display:block;margin-bottom:.35rem;font-weight:750}.configuration-field input:not([type=file]),.configuration-field select{width:100%;padding:.65rem;border:1px solid var(--line);border-radius:.55rem;background:#fff;font:inherit}
+</style>{% endblock %}
 {% block content %}<a class="back" href="{% url 'reports:select-report' job.pk %}">← Berichtsauswahl</a>
 <header class="page-head"><span class="eyebrow">Letzter Schritt</span><h1>{{ definition.name }}</h1><p>{{ definition.description }}</p></header>
-<form method="post" enctype="multipart/form-data" class="panel report-selection">{% csrf_token %}{{ form.as_p }}<button class="primary" type="submit">Auftrag starten</button></form>{% endblock %}
+<form method="post" enctype="multipart/form-data" class="panel report-selection" id="configuration-form">{% csrf_token %}
+{% if form.non_field_errors %}<div class="errors">{{ form.non_field_errors }}</div>{% endif %}
+{% for field in form %}{% if field.field.widget.input_type == "file" %}
+<div class="configuration-field">
+  <label class="dropzone secondary-dropzone" for="{{ field.id_for_label }}" data-file-dropzone><span>
+    <span class="drop-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 14v5h14v-5"/></svg></span>
+    <h2>CSV hier ablegen</h2><p class="muted">{{ field.label }}</p><span class="button">Datei auswählen</span>
+    <span class="filename" data-filename></span>
+  </span>{{ field }}</label>
+  {% if field.help_text %}<small class="field-help">{{ field.help_text }}</small>{% endif %}
+  {% if field.errors %}<div class="errors">{{ field.errors }}</div>{% endif %}
+</div>
+{% else %}<div class="configuration-field">{{ field.label_tag }}{{ field }}{% if field.help_text %}<small class="field-help">{{ field.help_text }}</small>{% endif %}{% if field.errors %}<div class="errors">{{ field.errors }}</div>{% endif %}</div>{% endif %}{% endfor %}
+<button class="primary" type="submit">Auftrag starten</button></form>
+<script>
+document.querySelectorAll('[data-file-dropzone]').forEach(zone=>{const input=zone.querySelector('input[type=file]'),filename=zone.querySelector('[data-filename]');const selected=()=>{filename.textContent=input.files.length?input.files[0].name:''};input.addEventListener('change',selected);['dragenter','dragover'].forEach(name=>zone.addEventListener(name,event=>{event.preventDefault();zone.classList.add('drag')}));['dragleave','drop'].forEach(name=>zone.addEventListener(name,event=>{event.preventDefault();zone.classList.remove('drag')}));zone.addEventListener('drop',event=>{if(event.dataTransfer.files.length){input.files=event.dataTransfer.files;selected()}})});
+</script>{% endblock %}

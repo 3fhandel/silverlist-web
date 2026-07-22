@@ -488,6 +488,18 @@ def render_generic_pdf(definition, result) -> bytes:
                     else _paragraph(row[indexes_by_column[column]], style)
                 )
             data.append(rendered)
+        total_row = options.get("total_row")
+        if total_row:
+            def total_value(column):
+                value = str(total_row.get(column, ""))
+                for name, variable in result.variables.items():
+                    value = value.replace("{{ " + name + " }}", str(variable or ""))
+                return value
+
+            data.append([
+                _paragraph(total_value(column), cell_header)
+                for column in visible_columns
+            ])
         table = Table(data, colWidths=column_widths, repeatRows=1, hAlign="LEFT")
         commands = [
             ("BACKGROUND", (0, 0), (-1, 0), LIGHT),
@@ -498,6 +510,11 @@ def render_generic_pdf(definition, result) -> bytes:
             ("LEFTPADDING", (0, 0), (-1, -1), 3), ("RIGHTPADDING", (0, 0), (-1, -1), 3),
             ("TOPPADDING", (0, 0), (-1, -1), 3), ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
         ]
+        if total_row:
+            commands.extend([
+                ("BACKGROUND", (0, -1), (-1, -1), LIGHT),
+                ("LINEABOVE", (0, -1), (-1, -1), 1.2, INK),
+            ])
         table.setStyle(TableStyle(commands))
         story.append(table)
 

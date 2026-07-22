@@ -25,7 +25,18 @@ class QueryResult:
 _QUOTED_PARAMETER = re.compile(r"(['\"])\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}\1")
 _PARAMETER = re.compile(r"\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}")
 _PLACEHOLDER = re.compile(r"\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}")
-_HEADER_ALIASES = {"HL": "Hauptlieferant"}
+_HEADER_ALIASES = {
+    "HL": "Hauptlieferant",
+    "Artikelnummer": "Artikel-Nr.",
+}
+
+
+def canonicalize_csv_header(header) -> tuple[str, ...]:
+    result = list(header)
+    for alias, canonical in _HEADER_ALIASES.items():
+        if alias in result and canonical not in result:
+            result.append(canonical)
+    return tuple(result)
 
 
 def _parameterize(query: str, parameters: dict[str, object]) -> tuple[str, list[object]]:
@@ -140,8 +151,4 @@ def inspect_csv_header(source: str | Path) -> tuple[str, ...]:
     lines = text.splitlines()
     if not lines:
         raise ReportInputError("Die CSV-Datei ist leer.")
-    header = list(next(csv.reader([lines[0]], delimiter=";")))
-    for alias, canonical in _HEADER_ALIASES.items():
-        if alias in header and canonical not in header:
-            header.append(canonical)
-    return tuple(header)
+    return canonicalize_csv_header(next(csv.reader([lines[0]], delimiter=";")))

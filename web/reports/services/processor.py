@@ -46,6 +46,18 @@ def _table_context(definition, result) -> dict:
                     break
             cells.append({"value": row[indexes[column]], "css_class": css_class})
         rows.append(cells)
+    total_row = options.get("total_row")
+    if total_row:
+        def total_value(column):
+            value = str(total_row.get(column, ""))
+            for name, variable in result.variables.items():
+                value = value.replace("{{ " + name + " }}", str(variable or ""))
+            return value
+
+        rows.append([
+            {"value": total_value(column), "css_class": "total-row"}
+            for column in columns
+        ])
     configured_widths = options.get("column_width_weights", {})
     weights = [float(configured_widths.get(column, 1)) for column in columns]
     total = sum(weights) or 1

@@ -1,0 +1,75 @@
+{
+  "key": "verpackungsmengen",
+  "name": "Verpackungsmengen (Meldepflicht)",
+  "description": "Berechnet Karton- und Kunststoffmengen für meldepflichtige Artikel anhand der verkauften Menge im gewählten Zeitraum.",
+  "export_source": "Stammdaten / Artikellisten",
+  "export_instructions": "In SilverERP Stammdaten / Artikellisten öffnen, die Attribute A:Meldepflichtig, A:Gewicht Karton und A:Gewicht Kunststoff einblenden und die Liste als CSV exportieren. Nach der Berichtsauswahl wird zusätzlich der Export Controlling / Artikel-Umsätze aus dem auszuwertenden Zeitraum benötigt.",
+  "required_columns": [
+    "Artikel-Nr.",
+    "Bezeichnung 1",
+    "S-Einheit",
+    "A:Meldepflichtig",
+    "A:Gewicht Karton",
+    "A:Gewicht Kunststoff"
+  ],
+  "query": "WITH artikel AS (\n  SELECT\n    TRIM(`Artikel-Nr.`) AS artnr,\n    `Bezeichnung 1` AS bezeichnung,\n    `S-Einheit` AS einheit,\n    COALESCE(TRY_CAST(REPLACE(`A:Gewicht Karton`, ',', '.') AS DOUBLE), 0) AS karton_je_einheit,\n    COALESCE(TRY_CAST(REPLACE(`A:Gewicht Kunststoff`, ',', '.') AS DOUBLE), 0) AS kunststoff_je_einheit\n  FROM data\n  WHERE COALESCE(TRY_CAST(TRIM(`A:Meldepflichtig`) AS INTEGER), 0) = 1\n), mengen AS (\n  SELECT\n    TRIM(`Artikel-Nr.`) AS artnr,\n    SUM(COALESCE(TRY_CAST(REPLACE(REPLACE(`Menge`, '.', ''), ',', '.') AS DOUBLE), 0)) AS menge\n  FROM umsatz\n  GROUP BY TRIM(`Artikel-Nr.`)\n)\nSELECT\n  artikel.artnr AS 'Artikel-Nr.',\n  artikel.bezeichnung AS 'Bezeichnung',\n  REPLACE(PRINTF('%.3f', COALESCE(mengen.menge, 0)), '.', ',') AS 'Menge',\n  artikel.einheit AS 'Einheit',\n  REPLACE(PRINTF('%.6f', artikel.karton_je_einheit), '.', ',') AS 'Karton je Einheit (kg)',\n  REPLACE(PRINTF('%.3f', COALESCE(mengen.menge, 0) * artikel.karton_je_einheit), '.', ',') AS 'Karton gesamt (kg)',\n  REPLACE(PRINTF('%.6f', artikel.kunststoff_je_einheit), '.', ',') AS 'Kunststoff je Einheit (kg)',\n  REPLACE(PRINTF('%.3f', COALESCE(mengen.menge, 0) * artikel.kunststoff_je_einheit), '.', ',') AS 'Kunststoff gesamt (kg)'\nFROM artikel\nLEFT JOIN mengen USING (artnr)\nORDER BY artikel.bezeichnung, artikel.artnr",
+  "renderer": "generic-table",
+  "variables": [
+    {
+      "name": "kartonGesamt",
+      "type": "sql",
+      "label": "Karton gesamt",
+      "query": "WITH artikel AS (SELECT TRIM(`Artikel-Nr.`) artnr, COALESCE(TRY_CAST(REPLACE(`A:Gewicht Karton`, ',', '.') AS DOUBLE), 0) gewicht FROM data WHERE COALESCE(TRY_CAST(TRIM(`A:Meldepflichtig`) AS INTEGER), 0) = 1), mengen AS (SELECT TRIM(`Artikel-Nr.`) artnr, SUM(COALESCE(TRY_CAST(REPLACE(REPLACE(`Menge`, '.', ''), ',', '.') AS DOUBLE), 0)) menge FROM umsatz GROUP BY TRIM(`Artikel-Nr.`)) SELECT REPLACE(PRINTF('%.3f kg', SUM(COALESCE(mengen.menge, 0) * artikel.gewicht)), '.', ',') FROM artikel LEFT JOIN mengen USING (artnr)"
+    },
+    {
+      "name": "kunststoffGesamt",
+      "type": "sql",
+      "label": "Kunststoff gesamt",
+      "query": "WITH artikel AS (SELECT TRIM(`Artikel-Nr.`) artnr, COALESCE(TRY_CAST(REPLACE(`A:Gewicht Kunststoff`, ',', '.') AS DOUBLE), 0) gewicht FROM data WHERE COALESCE(TRY_CAST(TRIM(`A:Meldepflichtig`) AS INTEGER), 0) = 1), mengen AS (SELECT TRIM(`Artikel-Nr.`) artnr, SUM(COALESCE(TRY_CAST(REPLACE(REPLACE(`Menge`, '.', ''), ',', '.') AS DOUBLE), 0)) menge FROM umsatz GROUP BY TRIM(`Artikel-Nr.`)) SELECT REPLACE(PRINTF('%.3f kg', SUM(COALESCE(mengen.menge, 0) * artikel.gewicht)), '.', ',') FROM artikel LEFT JOIN mengen USING (artnr)"
+    },
+    {
+      "name": "title",
+      "type": "constant",
+      "label": "Titel",
+      "value": "Verpackungsmengen"
+    },
+    {
+      "name": "subtitle",
+      "type": "constant",
+      "label": "Zusammenfassung",
+      "value": "Berechnung anhand der verkauften Menge und des Verpackungsgewichts je Systemeinheit"
+    }
+  ],
+  "additional_sources": [
+    {
+      "name": "umsatz",
+      "label": "Artikel-Umsätze für den auszuwertenden Zeitraum",
+      "help_text": "Quelle in SilverERP: Controlling / Artikel-Umsätze. Bitte zuvor den gewünschten Zeitraum einstellen und die angezeigte Liste als CSV exportieren.",
+      "required_columns": ["Artikel-Nr.", "Menge"]
+    }
+  ],
+  "groups": [],
+  "options": {
+    "show_header": true,
+    "show_page_numbers": true,
+    "compact_margins": true,
+    "layout": "internal-table",
+    "cell_font_size": 7.5,
+    "cell_leading": 9,
+    "total_row": {
+      "Artikel-Nr.": "Summe",
+      "Karton gesamt (kg)": "{{ kartonGesamt }}",
+      "Kunststoff gesamt (kg)": "{{ kunststoffGesamt }}"
+    },
+    "column_width_weights": {
+      "Artikel-Nr.": 1.2,
+      "Bezeichnung": 3.4,
+      "Menge": 0.9,
+      "Einheit": 0.7,
+      "Karton je Einheit (kg)": 1.25,
+      "Karton gesamt (kg)": 1.2,
+      "Kunststoff je Einheit (kg)": 1.4,
+      "Kunststoff gesamt (kg)": 1.35
+    }
+  }
+}

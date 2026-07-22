@@ -1,9 +1,12 @@
+import csv
+
 from django import forms
 from django.conf import settings
 
 from .catalog import get_catalog
 from .models import ReportJob
 from .report_modules.weekly_offer import DESIGNS, SLOT_CHOICES
+from .services.duckdb_engine import canonicalize_csv_header, inspect_csv_header
 
 
 class UploadForm(forms.ModelForm):
@@ -35,6 +38,7 @@ class ReportSelectionForm(forms.Form):
 
 class ReportConfigurationForm(forms.Form):
     def __init__(self, *args, definition, **kwargs):
+        self.definition = definition
         super().__init__(*args, **kwargs)
         for variable in definition.variables:
             kind = variable["type"]
@@ -50,8 +54,46 @@ class ReportConfigurationForm(forms.Form):
         for source in definition.additional_sources:
             self.fields[f"source__{source['name']}"] = forms.FileField(
                 label=source["label"],
+                help_text=source.get("help_text", ""),
                 widget=forms.FileInput(attrs={"accept": ".csv,text/csv"}),
             )
+
+    def clean(self):
+        cleaned = super().clean()
+        sources = {source["name"]: source for source in self.definition.additional_sources}
+        for name, source in sources.items():
+            upload = cleaned.get(f"source__{name}")
+            if not upload:
+                continue
+            required = set(source.get("required_columns", ()))
+            if not required:
+                continue
+            try:
+                header = set(inspect_csv_header(upload.temporary_file_path()))
+            except AttributeError:
+                position = upload.tell()
+                try:
+                    raw = upload.read()
+                    try:
+                        text = raw.decode("utf-8-sig")
+                    except UnicodeDecodeError:
+                        text = raw.decode("cp1252")
+                    header = set(canonicalize_csv_header(
+                        next(csv.reader([text.splitlines()[0]], delimiter=";"))
+                    ))
+                except (IndexError, StopIteration, UnicodeError) as exc:
+                    self.add_error(f"source__{name}", "Die CSV-Datei konnte nicht gelesen werden.")
+                    continue
+                finally:
+                    upload.seek(position)
+            missing = required - header
+            if missing:
+                self.add_error(
+                    f"source__{name}",
+                    "Das ist nicht der erwartete Export. Fehlende Spalten: "
+                    + ", ".join(sorted(missing)),
+                )
+        return cleaned
 
 
 class WeeklyOfferConfigurationForm(forms.Form):
