@@ -77,6 +77,10 @@ def test_preorder_articles_are_sorted_after_all_other_articles(tmp_path):
     assert [row[0] for row in result.rows] == [
         "80-001", "90-001", "10-001", "99-001",
     ]
+    assert result.rows[2][1] == (
+        "Vorbestellung mit kleiner Nummer\nVB · Vorbestell-Artikel"
+    )
+    assert result.rows[3][1] == "Weitere Vorbestellung\nVB · Vorbestell-Artikel"
 
 
 def test_preorder_articles_can_be_excluded(tmp_path):
