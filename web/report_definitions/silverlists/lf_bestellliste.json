@@ -7,15 +7,31 @@
   "required_columns": [
     "Artikel-Nr.",
     "Bezeichnung 1",
+    "Bezeichnung 2",
     "Lf.-Artikel-Nr.",
     "Bestand",
     "S.-Einheit",
     "Archiv Artikel",
     "Hauptlieferant"
   ],
-  "query": "SELECT\n        `Artikel-Nr.` || CASE WHEN COALESCE(TRIM(`Lf.-Artikel-Nr.`), '') = '' THEN '' ELSE chr(10) || '(' || TRIM(`Lf.-Artikel-Nr.`) || ')' END AS 'ArtNr',\n        `Bezeichnung 1` AS 'Bezeichnung',\n        `Bestand`,\n        `S.-Einheit`,\n        '' AS 'Bestellmenge'\n      FROM data\n      WHERE COALESCE(`Archiv Artikel`, '0') != '1'\n        AND `Hauptlieferant` = 'Ja'\n      ORDER BY `Artikel-Nr.`",
+  "query": "SELECT\n        `Artikel-Nr.` || CASE WHEN COALESCE(TRIM(`Lf.-Artikel-Nr.`), '') = '' THEN '' ELSE chr(10) || '(' || TRIM(`Lf.-Artikel-Nr.`) || ')' END AS 'ArtNr',\n        `Bezeichnung 1` AS 'Bezeichnung',\n        `Bestand`,\n        `S.-Einheit`,\n        '' AS 'Bestellmenge'\n      FROM data\n      WHERE COALESCE(`Archiv Artikel`, '0') != '1'\n        AND `Hauptlieferant` = 'Ja'\n        AND ({{ vorbestellartikel }} = 'ja' OR LOWER(TRIM(COALESCE(`Bezeichnung 2`, ''))) != 'vorbestell-artikel')\n      ORDER BY\n        CASE WHEN LOWER(TRIM(COALESCE(`Bezeichnung 2`, ''))) = 'vorbestell-artikel' THEN 1 ELSE 0 END,\n        `Artikel-Nr.`",
   "renderer": "generic-table",
   "variables": [
+    {
+      "name": "vorbestellartikel",
+      "type": "userSelect",
+      "label": "Vorbestell-Artikel mitdrucken?",
+      "selectFrom": [
+        {
+          "text": "Ja",
+          "value": "ja"
+        },
+        {
+          "text": "Nein",
+          "value": "nein"
+        }
+      ]
+    },
     {
       "name": "title",
       "type": "constant",
