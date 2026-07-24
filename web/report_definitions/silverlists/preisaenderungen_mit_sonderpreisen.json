@@ -1,0 +1,96 @@
+{
+  "key": "preisaenderungen-mit-sonderpreisen",
+  "name": "Preisänderungen mit Kundensonderpreisen",
+  "description": "Gruppiert Einkaufspreisänderungen nach Artikel und führt darunter die zugehörigen Kundensonderpreise auf.",
+  "export_source": "Controlling / Gesp. Abfragen / Preise",
+  "export_instructions": "Zuerst in SilverERP Controlling / Gesp. Abfragen / Preise öffnen und die Liste als CSV exportieren. Nach der Berichtsauswahl zusätzlich den Export für EK Sonderpreise aus Gespeicherte Abfragen hochladen.",
+  "required_columns": [
+    "Artikel-Nr.",
+    "Suchbegriff",
+    "Bezeichnung 1",
+    "Typ",
+    "Referenz",
+    "Zeitpunkt",
+    "Benutzer",
+    "Ab Menge",
+    "Preis",
+    "Preis neu",
+    "Währung"
+  ],
+  "query": "WITH prepared AS (\n        SELECT *,\n          CAST(`Zeitpunkt` AS BIGINT) AS silver_timestamp,\n          (CAST(`Zeitpunkt` AS DOUBLE) - 7900000000000) / 1000000000 AS x\n        FROM data\n        WHERE `Typ` = 'supplierArticle'\n      ), changed_articles AS (\n        SELECT DISTINCT `Artikel-Nr.` FROM prepared\n      ), combined AS (\n        SELECT\n          `Artikel-Nr.` AS artnr,\n          `Bezeichnung 1` AS bezeichnung,\n          0 AS row_type,\n          silver_timestamp AS row_time,\n          'EK-Änderung' AS eintrag,\n          `Referenz` AS bezug,\n          STRFTIME(\n            TIMESTAMP '2000-01-01 00:00:00'\n              + (14.2926176 * POWER(x, 4) + 1546.80544 * POWER(x, 3) - 26762.5368 * POWER(x, 2) + 7762978.55 * x + 669577867) * INTERVAL '1 second',\n            '%d.%m.%Y %H:%M'\n          ) || chr(10) || `Benutzer` AS zeit_benutzer,\n          REPLACE(PRINTF('%.4f', CAST(REPLACE(`Preis`, ',', '.') AS DOUBLE)), '.', ',') || chr(10) || REPLACE(PRINTF('%.4f', CAST(REPLACE(`Preis`, ',', '.') AS DOUBLE) * 1.11), '.', ',') AS preis_alt_ek,\n          REPLACE(PRINTF('%.4f', CAST(REPLACE(`Preis neu`, ',', '.') AS DOUBLE)), '.', ',') || chr(10) || REPLACE(PRINTF('%.4f', CAST(REPLACE(`Preis neu`, ',', '.') AS DOUBLE) * 1.11), '.', ',') AS preis_neu_kunde,\n          CASE\n            WHEN CAST(REPLACE(`Preis`, ',', '.') AS DOUBLE) = 0 THEN '–'\n            ELSE REPLACE(PRINTF('%+.2f %%', (CAST(REPLACE(`Preis neu`, ',', '.') AS DOUBLE) / CAST(REPLACE(`Preis`, ',', '.') AS DOUBLE) - 1) * 100), '.', ',')\n          END AS abweichung,\n          CASE\n            WHEN CAST(REPLACE(`Preis neu`, ',', '.') AS DOUBLE) > CAST(REPLACE(`Preis`, ',', '.') AS DOUBLE) THEN 'up'\n            WHEN CAST(REPLACE(`Preis neu`, ',', '.') AS DOUBLE) < CAST(REPLACE(`Preis`, ',', '.') AS DOUBLE) THEN 'down'\n            ELSE 'same'\n          END AS richtung\n        FROM prepared\n        UNION ALL\n        SELECT\n          s.`Artikel-Nr.` AS artnr,\n          s.`Beschreibung 1` AS bezeichnung,\n          1 AS row_type,\n          NULL AS row_time,\n          'Kundensonderpreis' AS eintrag,\n          '[' || s.`Kunden-Nr.` || '] ' || s.`Name1` AS bezug,\n          '' AS zeit_benutzer,\n          REPLACE(s.`EK-Kalk`, '.', ',') AS preis_alt_ek,\n          REPLACE(s.`Kundenpreis`, '.', ',') AS preis_neu_kunde,\n          s.`Prozent von EK-Kalk` || '%' AS abweichung,\n          'same' AS richtung\n        FROM sonderpreise s\n        INNER JOIN changed_articles c ON c.`Artikel-Nr.` = s.`Artikel-Nr.`\n        WHERE TRY_CAST(REPLACE(REPLACE(s.`Kundenpreis`, '.', ''), ',', '.') AS DOUBLE) <> 0\n      )\n      SELECT\n        '[' || artnr || '] ' || bezeichnung AS AID,\n        eintrag AS 'Eintrag',\n        bezug AS 'Lieferant / Kunde',\n        zeit_benutzer AS 'Zeitpunkt / Benutzer',\n        preis_alt_ek AS 'Preis alt / EK-Kalk',\n        preis_neu_kunde AS 'Preis neu / Kundenpreis',\n        abweichung AS 'Änderung / Spanne',\n        richtung AS 'Änderungsrichtung',\n        artnr AS '__Artikelnummer',\n        row_type AS '__Typ',\n        row_time AS '__Zeit'\n      FROM combined\n      ORDER BY __Artikelnummer ASC, __Typ ASC, __Zeit DESC NULLS LAST, bezug ASC",
+  "renderer": "grouped-table",
+  "variables": [
+    {
+      "name": "title",
+      "type": "constant",
+      "label": "title",
+      "value": "Preisänderungen mit Kundensonderpreisen"
+    },
+    {
+      "name": "subtitle",
+      "type": "sql",
+      "label": "subtitle",
+      "query": "SELECT 'Auswertung vom ' || strftime('%d.%m.%Y', 'now')"
+    }
+  ],
+  "additional_sources": [
+    {
+      "name": "sonderpreise",
+      "label": "CSV für EK Sonderpreise",
+      "help_text": "Quelle in SilverERP: Gespeicherte Abfragen / EK Sonderpreise. Kundensonderpreise werden nur für Artikel aus der ersten Datei aufgeführt.",
+      "required_columns": [
+        "Artikel-Nr.",
+        "Beschreibung 1",
+        "EK-Kalk",
+        "Kunden-Nr.",
+        "Name1",
+        "Kundenpreis",
+        "Prozent von EK-Kalk"
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "column": "AID",
+      "show_column": false,
+      "page_break": false,
+      "repeat_header": false
+    }
+  ],
+  "options": {
+    "show_header": true,
+    "show_page_numbers": true,
+    "compact_margins": true,
+    "layout": "internal-table",
+    "cell_font_size": 6.7,
+    "cell_leading": 8.2,
+    "hidden_columns": [
+      "Änderungsrichtung",
+      "__Artikelnummer",
+      "__Typ",
+      "__Zeit"
+    ],
+    "conditional_styles": [
+      {
+        "target_column": "Änderung / Spanne",
+        "when_column": "Änderungsrichtung",
+        "equals": "up",
+        "style": "trend-up"
+      },
+      {
+        "target_column": "Änderung / Spanne",
+        "when_column": "Änderungsrichtung",
+        "equals": "down",
+        "style": "trend-down"
+      }
+    ],
+    "column_width_weights": {
+      "Eintrag": 1.15,
+      "Lieferant / Kunde": 2.3,
+      "Zeitpunkt / Benutzer": 1.65,
+      "Preis alt / EK-Kalk": 1.3,
+      "Preis neu / Kundenpreis": 1.45,
+      "Änderung / Spanne": 1.3
+    }
+  }
+}

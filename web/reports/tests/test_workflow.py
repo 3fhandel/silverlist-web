@@ -30,3 +30,11 @@ def test_upload_detect_select_and_process(client, settings, tmp_path):
     assert job.status == ReportJob.Status.SUCCEEDED
     assert job.result_html
     assert job.result_pdf
+
+
+@pytest.mark.django_db
+def test_base_template_includes_silverlists_favicon(client):
+    response = client.get(reverse("reports:dashboard"))
+
+    assert 'rel="icon"' in response.content.decode()
+    assert "reports/brand/favicon.png" in response.content.decode()

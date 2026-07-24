@@ -4,57 +4,20 @@ from reports.catalog import get_definition, matching_definitions
 from reports.services.duckdb_engine import execute_report
 
 
-def test_regular_articles_keep_their_name_when_description_2_is_empty(tmp_path: Path):
-    definition = get_definition("obst-gemuese-preisliste")
-    source = tmp_path / "artikelpreise.csv"
-    rows = [";".join(definition.required_columns)]
-    index = {name: position for position, name in enumerate(definition.required_columns)}
-
-    for name, description_2 in (
-        ("Äpfel Elstar", ""),
-        ("Kartoffeln festkochend", "deutsche Ware"),
-        ("Kiwi grün", "Vorbestell-Artikel"),
-    ):
-        values = [""] * len(definition.required_columns)
-        values[index["Bezeichnung 1"]] = name
-        values[index["Bezeichnung 2"]] = description_2
-        values[index["Grundpreis"]] = "2,500"
-        values[index["S-Einheit"]] = "KG"
-        values[index["Dispo-Kennzeichen"]] = "1"
-        values[index["Wg.-Pfad"]] = "60-10"
-        rows.append(";".join(values))
-    source.write_text("\n".join(rows), encoding="utf-8")
-
-    result = execute_report(source, definition)
-
-    article_index = result.columns.index("Artikel")
-    articles = {row[article_index] for row in result.rows}
-    assert articles == {
-        "Äpfel Elstar",
-        "Kartoffeln festkochend – deutsche Ware",
-        "Kiwi grün – Vorbestell-Artikel",
-    }
-
-
-def test_two_column_pricelist_is_an_additional_matching_report():
-    fallback = get_definition("obst-gemuese-preisliste")
+def test_two_column_pricelist_is_the_only_obst_gemuese_report():
     compact = get_definition("obst-gemuese-preisliste-zweispaltig")
 
-    assert fallback.options["layout"] == "pricelist"
     assert compact.options["layout"] == "two-column-pricelist"
     assert len(compact.options["list_notices"]) == 3
     assert "VB = Vorbestell-Artikel." in compact.options["list_notices"]
     assert "Weitere Artikel" in compact.options["closing_notice"]
-    assert compact.required_columns == fallback.required_columns
 
     matches = {
         definition.key
         for definition in matching_definitions(compact.required_columns)
     }
-    assert {
-        "obst-gemuese-preisliste",
-        "obst-gemuese-preisliste-zweispaltig",
-    }.issubset(matches)
+    assert "obst-gemuese-preisliste-zweispaltig" in matches
+    assert "obst-gemuese-preisliste" not in matches
 
 
 def test_two_column_pricelist_sorts_umlauts_and_prioritizes_new_badges(tmp_path: Path):

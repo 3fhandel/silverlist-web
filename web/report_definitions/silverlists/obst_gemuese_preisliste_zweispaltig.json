@@ -1,6 +1,6 @@
 {
   "key": "obst-gemuese-preisliste-zweispaltig",
-  "name": "Preisliste Obst/Gemüse (zweispaltig)",
+  "name": "Preisliste Obst/Gemüse",
   "description": "Platzsparende zweispaltige Variante der Obst- und Gemüsepreisliste.",
   "export_source": "Stammdaten / [D] Artikelpreise",
   "export_instructions": "In SilverERP Stammdaten / [D] Artikelpreise öffnen und die angezeigte Liste als CSV exportieren.",

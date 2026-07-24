@@ -1,3 +1,6 @@
+from pathlib import Path
+
+from django.conf import settings
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from PIL import Image, UnidentifiedImageError
@@ -210,4 +213,29 @@ def result_pdf(request, pk):
         job.result_pdf.open("rb"), content_type="application/pdf",
         filename=f"{job.report_key}.pdf",
         as_attachment=request.GET.get("download") == "1",
+    )
+
+
+def extension_download(request):
+    configured = getattr(settings, "SILVERLISTS_EXTENSION_PACKAGE", None)
+    if configured:
+        candidates = [Path(configured)]
+    else:
+        candidates = [
+            Path("/app/downloads/silverlists-web-extension.zip"),
+            *sorted(
+                (settings.BASE_DIR.parent / "extension" / "dist").glob(
+                    "silverlists-web-extension-*.zip"
+                ),
+                reverse=True,
+            ),
+        ]
+    package = next((path for path in candidates if path.is_file()), None)
+    if package is None:
+        raise Http404("Das Paket der Chrome-Erweiterung wurde noch nicht erzeugt.")
+    return FileResponse(
+        package.open("rb"),
+        content_type="application/zip",
+        filename=package.name,
+        as_attachment=True,
     )

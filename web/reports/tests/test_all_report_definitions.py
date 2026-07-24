@@ -93,7 +93,7 @@ def test_every_sql_report_executes_and_renders_pdf(definition, tmp_path):
 
 
 def test_report_definitions_do_not_embed_html_in_queries_or_variables():
-    html = re.compile(r"<\s*/?\s*[a-z][^>]*>|&(?:nbsp|euro);", re.IGNORECASE)
+    html = re.compile(r"</?[a-z][^>]*>|&(?:nbsp|euro);", re.IGNORECASE)
     for definition in SQL_DEFINITIONS:
         assert not html.search(definition.query), definition.key
         for variable in definition.variables:

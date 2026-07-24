@@ -26,5 +26,4 @@ def test_current_disposition_export_is_recognized():
         "dispoliste-fleisch-summen",
         "dispoliste-og-summen",
         "dispoliste-tiefkuehl-kunden",
-        "tourenschein",
     }.issubset(keys)

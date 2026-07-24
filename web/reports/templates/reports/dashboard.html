@@ -1,6 +1,11 @@
 {% extends "base.html" %}{% block title %}SilverLists Web{% endblock %}
 {% block topbar_actions %}<button class="settings-button" id="settings-toggle" type="button" title="Downloadordner-Einstellungen" aria-label="Downloadordner-Einstellungen" aria-expanded="false"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
-<div class="settings-popover" id="download-settings" hidden><strong>Downloadordner</strong><p id="folder-status">Nicht verbunden</p><button type="button" class="button" id="connect-downloads">Ordner für SilverLists Web auswählen</button></div>{% endblock %}
+<div class="settings-popover" id="download-settings" hidden>
+  <strong>Downloadordner</strong><p id="folder-status">Nicht verbunden</p><button type="button" class="button" id="connect-downloads">Ordner für SilverLists Web auswählen</button>
+  <div class="settings-divider"></div>
+  <strong>Chrome-Erweiterung</strong><p>ZIP entpacken und unter <code>chrome://extensions</code> im Entwicklermodus laden.</p>
+  <a class="secondary settings-download" href="{% url 'reports:extension-download' %}" download><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>ZIP herunterladen</a>
+</div>{% endblock %}
 {% block content %}
 <header class="page-head dashboard-head"><span class="eyebrow">Berichtserstellung</span><h1>SilverERP-Auswertung erstellen</h1><p>Lade einen CSV-Export aus SilverERP hoch. SilverLists Web prüft die enthaltenen Spalten und zeigt anschließend die passenden Berichte an.</p></header>
 <section class="integration" id="folder-warning" hidden>

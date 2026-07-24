@@ -10,4 +10,5 @@ urlpatterns = [
     path("jobs/<uuid:pk>/", views.job_detail, name="job-detail"),
     path("jobs/<uuid:pk>/result.html", views.result_html, name="result-html"),
     path("jobs/<uuid:pk>/result.pdf", views.result_pdf, name="result-pdf"),
+    path("downloads/chrome-extension.zip", views.extension_download, name="extension-download"),
 ]

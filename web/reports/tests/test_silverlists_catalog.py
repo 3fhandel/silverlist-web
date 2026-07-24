@@ -14,7 +14,7 @@ def test_all_legacy_silverlists_reports_are_registered():
         "example-generic-report", "ordersatz-vk1", "ordersatz-vk2", "ordersatz-vk3",
         "ordersatz-vk4", "ordersatz-vk5", "ordersatz-vk6", "ordersatz-ohne-preise",
     }]
-    assert len(legacy) == 26
+    assert len(legacy) == 18
 
 
 def price_list_csv() -> bytes:
@@ -34,7 +34,7 @@ def test_price_list_export_is_recognized(tmp_path):
     source = tmp_path / "preisliste.csv"
     source.write_bytes(price_list_csv())
     keys = {item.key for item in matching_definitions(inspect_csv_header(source))}
-    assert {"preisliste", "wochenangebot", "postangebot"}.issubset(keys)
+    assert {"preisliste", "wochenangebot"}.issubset(keys)
 
 
 @pytest.mark.django_db

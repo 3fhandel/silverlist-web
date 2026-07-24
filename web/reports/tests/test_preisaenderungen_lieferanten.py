@@ -50,3 +50,17 @@ def test_silvererp_timestamp_uses_polynomial_decoder(tmp_path):
     result = execute_report(source, get_definition("preisaenderungen-lieferanten"))
 
     assert result.rows[0][2] == "20.07.2026 14:42"
+
+
+def test_supplier_price_changes_are_sorted_by_article_number(tmp_path):
+    source = tmp_path / "sortierung.csv"
+    source.write_text(
+        ";".join(HEADER) + "\n"
+        "90-1;Artikel;Später Artikel;supplierArticle;Lieferant;7920996852379;user;0;8,0000;8,8000;EUR\n"
+        "10-1;Artikel;Früher Artikel;supplierArticle;Lieferant;7920947255856;user;0;8,0000;8,8000;EUR\n",
+        encoding="utf-8",
+    )
+
+    result = execute_report(source, get_definition("preisaenderungen-lieferanten"))
+
+    assert [row[0].splitlines()[0] for row in result.rows] == ["10-1", "90-1"]

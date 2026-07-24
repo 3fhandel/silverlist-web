@@ -34,17 +34,6 @@ def convert(path: Path) -> dict:
             if key in variable:
                 item[key] = placeholders(variable[key]) if isinstance(variable[key], str) else variable[key]
         variables.append(item)
-    if path.stem == "vertreterliste":
-        for variable in variables:
-            if variable["name"] == "summe":
-                variable["query"] = "SELECT REPLACE(CAST(SUM(CAST(REPLACE(REPLACE(`Umsatz`, '.', ''), ',', '.') AS DOUBLE)) AS VARCHAR), '.', ',') FROM data"
-    elif path.stem == "revergleich":
-        for variable in variables:
-            if variable["name"] == "umsSilver":
-                variable["query"] = "SELECT SUM(CAST(REPLACE(REPLACE(`B.-Brutto`, '.', ''), ',', '.') AS DOUBLE)) FROM silver"
-            elif variable["name"] == "umsDatev":
-                variable["query"] = "SELECT SUM((CASE `Soll/Haben-Kennzeichen` WHEN 'S' THEN 1 ELSE -1 END) * CAST(REPLACE(`Umsatz (ohne Soll/Haben-Kz)`, ',', '.') AS DOUBLE)) FROM data"
-
     subheaders = []
     for group in old.get("subHeaders", []):
         subheaders.append({
@@ -58,7 +47,7 @@ def convert(path: Path) -> dict:
     # Neuere SilverERP-Versionen liefern zusätzliche Spalten, lassen aber einige
     # historische, von diesen Berichten nie verwendete Felder weg. Erkennung
     # basiert deshalb nur auf den fachlich benötigten Pflichtspalten.
-    if path.stem.startswith("dispoliste_") or path.stem == "tourenschein":
+    if path.stem.startswith("dispoliste_"):
         header = [column for column in header if column not in {"Eilig", "Pos."}]
     query = placeholders(old["dataSql"])
     if path.stem == "bestellliste":
@@ -74,42 +63,22 @@ def convert(path: Path) -> dict:
         SUM(CAST(REPLACE(Menge, ',', '.') AS DOUBLE)) AS Menge, `Einheit`
         FROM data WHERE `Artikel-Nr.` LIKE '60-%' GROUP BY `Artikel-Nr.`, `Einheit`
         ORDER BY `Artikel-Nr.`, `Einheit`"""
-    elif path.stem == "tourenschein":
-        query = query.replace("'[' || `Kunden-Nr.` || '] ' || `Name 1` || '<br/>' || `Ort`", "ANY_VALUE('[' || `Kunden-Nr.` || '] ' || `Name 1` || '<br/>' || `Ort`)")
-        query = query.replace("`Beleg-Nr.` || ' (' || `W.-Termin` || ')' || '<br/>' || `B.-Brutto` || ' &euro;'", "ANY_VALUE(`Beleg-Nr.` || ' (' || `W.-Termin` || ')' || '<br/>' || `B.-Brutto` || ' &euro;')")
-        query = query.replace("ORDER BY `Kunden-Nr.` ASC, `Beleg-Nr.` ASC", "ORDER BY MIN(`Kunden-Nr.`) ASC, `Beleg-Nr.` ASC")
-    elif path.stem == "aussenstaende":
-        query = query.replace("SUM(REPLACE(`Brutto`, ',', '.'))", "SUM(CAST(REPLACE(`Brutto`, ',', '.') AS DOUBLE))")
     elif path.stem == "dispoliste_fleisch_summen":
         query = """SELECT `Artikel-Nr.`, ANY_VALUE(`Bezeichnung 1`) AS Bezeichnung,
         SUM(CAST(REPLACE(Menge, ',', '.') AS DOUBLE)) AS Menge, `Einheit`
         FROM data WHERE `Artikel-Nr.` LIKE '20-%' OR `Artikel-Nr.` LIKE '30-%'
         GROUP BY `Artikel-Nr.`, `Einheit` ORDER BY `Artikel-Nr.`, `Einheit`"""
-    elif path.stem in {"kundenpreisliste_allgemein", "privat_preisliste"}:
+    elif path.stem == "kundenpreisliste_allgemein":
         query = query.replace("MAX(REPLACE(`Grundpreis`, ',', '.'))", "MAX(CAST(REPLACE(`Grundpreis`, ',', '.') AS DOUBLE))")
         query = query.replace("MAX(REPLACE(`Endpreis Brutto`, ',', '.'))", "MAX(CAST(REPLACE(`Endpreis Brutto`, ',', '.') AS DOUBLE))")
         query = query.replace("GROUP BY `Artikel-Nr.`", "GROUP BY ALL")
         query = re.sub(r"ORDER BY `Wg\.-Pfad`, `Bezeichnung 1`", "ORDER BY 1, 3", query)
-    elif path.stem == "obst_gemuese_preisliste":
-        query = query.replace("MAX(REPLACE(`Grundpreis`, ',', '.') - 0.001)", "MAX(CAST(REPLACE(`Grundpreis`, ',', '.') AS DOUBLE) - 0.001)")
-        query = query.replace("GROUP BY `Artikel-Nr.`", "GROUP BY ALL")
-        query = query.replace("ORDER BY `Dispo-Kennzeichen`, `Bezeichnung 1`", "ORDER BY 1, 2")
     elif path.stem == "frischemarkt":
         query = """SELECT `Artikel-Nr.` AS Artikelnummer, `Bezeichnung 1` AS Bezeichnung, `Preis neu` AS "Preis VK"
         FROM data WHERE Referenz LIKE 'EVP'
         QUALIFY ROW_NUMBER() OVER (PARTITION BY `Artikel-Nr.` ORDER BY Zeitpunkt DESC) = 1"""
-    elif path.stem == "vertreterliste":
-        query = query.replace("`Umsatz` AS 'Umsatz {{ zeitraum }}'", "`Umsatz` AS Umsatz")
     elif path.stem == "postangebot":
         query = query.replace("FROM kunden JOIN data", "FROM kunden CROSS JOIN data")
-    elif path.stem == "revergleich":
-        query = """SELECT *, ROUND(DatevBetrag - SilverBetrag, 2) AS Differenz FROM (
-        SELECT `Belegfeld 1` AS Rechnungsnummer,
-        SUM((CASE `Soll/Haben-Kennzeichen` WHEN 'S' THEN 1 ELSE -1 END) * CAST(REPLACE(`Umsatz (ohne Soll/Haben-Kz)`, ',', '.') AS DOUBLE)) AS DatevBetrag,
-        ANY_VALUE(CAST(REPLACE(REPLACE(silver.`B.-Brutto`, '.', ''), ',', '.') AS DOUBLE)) AS SilverBetrag
-        FROM data LEFT JOIN silver ON silver.`Beleg-Nr.` = data.`Belegfeld 1`
-        GROUP BY `Belegfeld 1`) comparison
-        WHERE (DatevBetrag - SilverBetrag) < 0.01 ORDER BY Differenz"""
 
     legacy_template = old.get("templates", {}).get("bodyFile", "")
     if "addresslabels" in legacy_template:

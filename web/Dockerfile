@@ -14,6 +14,15 @@ RUN if [ -d .git ]; then \
         date -u +%Y%m%d-%H%M > .silverlists-build-version; \
     fi
 
+FROM alpine:3.22 AS extension-package
+
+RUN apk add --no-cache make nodejs python3 zip
+
+WORKDIR /build
+COPY extension ./
+RUN make package \
+    && cp dist/silverlists-web-extension-*.zip /silverlists-web-extension.zip
+
 FROM python:3.13-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -36,6 +45,7 @@ COPY web/report_definitions /app/report_definitions
 COPY web/manage.py web/docker-entrypoint.sh /app/
 COPY web/assets /app/assets
 COPY --from=build-metadata /build/.silverlists-build-version /app/.silverlists-build-version
+COPY --from=extension-package /silverlists-web-extension.zip /app/downloads/silverlists-web-extension.zip
 
 RUN pip install --no-cache-dir . \
     && chmod +x /app/docker-entrypoint.sh \

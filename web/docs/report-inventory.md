@@ -26,7 +26,6 @@ werden. Sicher aus dem Altcode belegt sind diese Pflichtspalten:
 
 | Altbericht | SilverERP-Export laut `.rpt` |
 |---|---|
-| Außenstände | Controlling → Außenstände |
 | Bestellliste | Stammdaten → Artikellisten |
 | Dispoliste Fleisch, Kunden | Disposition Aufträge |
 | Dispoliste Fleisch, Summen | Disposition Aufträge |
@@ -36,20 +35,13 @@ werden. Sicher aus dem Altcode belegt sind diese Pflichtspalten:
 | Frischemarkt | Controlling → Gespeicherte Abfragen → Preise |
 | Kundeninventur | Controlling → Kunden-Artikel-Statistik |
 | Kundenbestellzettel | Kundenstamm → Info → Verkaufshistorie |
-| Kunden-E-Mail-Verteiler | Stammdaten → Preislisten-Definition |
 | Kundenpreisliste | Stammdaten → [D] Kundenpreise |
 | Allgemeine Kundenpreisliste | Stammdaten → [D] Artikelpreise |
 | Kundensonderpreise | Kundenstamm → Kundenartikel |
 | Lieferanten-Bestellliste | Stammdaten → Lieferant → Lieferanten-Artikel |
 | Preisliste Obst/Gemüse | Stammdaten → [D] Artikelpreise |
-| Adressetiketten | Stammdaten → Preislisten-Definition |
 | Angebot per Post | Stammdaten → Preislisten-Definition; zusätzlich Kundenliste erforderlich |
 | Sonderpreisliste | Stammdaten → Preislisten-Definition |
-| Privatkundenpreisliste | Stammdaten → [D] Artikelpreise |
-| Privatlieferung | Kundenstamm → Kundenartikel |
-| Rechnungsvergleich DATEV | Im Altbestand nicht dokumentiert; zusätzlich SilverERP-Umsatzliste erforderlich |
-| Tourenschein | Disposition Aufträge |
-| Vertreterumsatzliste | Controlling → Kunden-Umsatz-Monat → Auswertung |
 | Wochenangebot | Stammdaten → Preislisten-Definition |
 
 Die vollständigen erwarteten Header stehen noch in den jeweiligen Dateien unter
