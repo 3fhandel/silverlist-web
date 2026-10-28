@@ -596,3 +596,136 @@ def render_address_labels_pdf(definition, result) -> bytes:
             pdf.drawString(x, y_top - offset * 4.2 * mm, text)
     pdf.save()
     return buffer.getvalue()
+
+
+def render_delivery_note_pdf(definition, result) -> bytes:
+    """Schlichter, preisfreier vorläufiger Lieferschein."""
+    buffer = BytesIO()
+    horizontal_margin = 14 * mm
+    document = SimpleDocTemplate(
+        buffer, pagesize=A4,
+        leftMargin=horizontal_margin, rightMargin=horizontal_margin,
+        topMargin=17 * mm, bottomMargin=18 * mm,
+        title=str(result.variables.get("title", definition.name)),
+        author="3F Handelsgesellschaft mbH",
+    )
+    styles = getSampleStyleSheet()
+    title = ParagraphStyle(
+        "DeliveryTitle", parent=styles["Title"], fontName="Helvetica-Bold",
+        fontSize=23, leading=27, alignment=TA_LEFT, textColor=INK,
+    )
+    body = ParagraphStyle(
+        "DeliveryBody", parent=styles["BodyText"], fontName="Helvetica",
+        fontSize=9, leading=12, textColor=INK,
+    )
+    small = ParagraphStyle(
+        "DeliverySmall", parent=body, fontSize=7.5, leading=9,
+        textColor=colors.HexColor("#5F6B7A"),
+    )
+    header_cell = ParagraphStyle(
+        "DeliveryHeaderCell", parent=small, fontName="Helvetica-Bold",
+        textColor=INK,
+    )
+    right = ParagraphStyle("DeliveryRight", parent=body, alignment=TA_RIGHT)
+    center = ParagraphStyle("DeliveryCenter", parent=body, alignment=TA_CENTER)
+
+    story = []
+    header = _asset("header.png")
+    if header.exists():
+        story.extend([
+            Image(str(header), width=182 * mm, height=41.2 * mm),
+            Spacer(1, 5 * mm),
+        ])
+    story.append(Paragraph("Vorläufiger Lieferschein", title))
+    story.append(Spacer(1, 2 * mm))
+    story.append(Paragraph(
+        "Kein steuerlicher Beleg · Mengenangaben vorbehaltlich der endgültigen Lieferung",
+        small,
+    ))
+    story.append(Spacer(1, 6 * mm))
+
+    recipient = str(result.variables.get("empfaenger") or "").strip()
+    reference = str(result.variables.get("referenz") or "").strip()
+    delivery_date = str(result.variables.get("lieferdatum") or "-")
+    meta = Table([
+        [
+            Paragraph("<b>Empfänger / Lieferanschrift</b>", body),
+            Paragraph("<b>Dokumentdaten</b>", body),
+        ],
+        [
+            _paragraph(recipient or "Nicht angegeben", body),
+            _paragraph(
+                f"Lieferdatum: {delivery_date}\n"
+                f"Referenz: {reference or '-'}\n"
+                f"Erstellt: {datetime.now():%d.%m.%Y}",
+                body,
+            ),
+        ],
+    ], colWidths=[112 * mm, 56 * mm], hAlign="LEFT")
+    meta.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), LIGHT),
+        ("BOX", (0, 0), (-1, -1), .5, colors.HexColor("#C5CEDA")),
+        ("INNERGRID", (0, 0), (-1, -1), .35, colors.HexColor("#D7DEE7")),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 6),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+    ]))
+    story.extend([meta, Spacer(1, 7 * mm)])
+
+    columns = list(result.columns)
+    widths_by_name = {
+        "Pos.": 12 * mm,
+        "Artikel-Nr.": 31 * mm,
+        "Bezeichnung": 83 * mm,
+        "Menge": 22 * mm,
+        "Einheit": 20 * mm,
+    }
+    widths = [widths_by_name.get(column, 30 * mm) for column in columns]
+    data = [[_paragraph(column, header_cell) for column in columns]]
+    for row in result.rows:
+        rendered = []
+        for column, value in zip(columns, row, strict=True):
+            style = right if column == "Menge" else center if column in {"Pos.", "Einheit"} else body
+            rendered.append(_paragraph(value, style))
+        data.append(rendered)
+    positions = Table(data, colWidths=widths, repeatRows=1, hAlign="LEFT")
+    positions.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), BLUE),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F4F6F8")]),
+        ("LINEBELOW", (0, 0), (-1, -1), .35, colors.HexColor("#C7D0DC")),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 4),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+        ("TOPPADDING", (0, 0), (-1, -1), 4),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+    ]))
+    story.extend([positions, Spacer(1, 10 * mm)])
+
+    receipt = Table([
+        [_paragraph("Ware erhalten am", small), _paragraph("Name / Unterschrift", small)],
+        ["", ""],
+    ], colWidths=[70 * mm, 98 * mm], rowHeights=[6 * mm, 15 * mm])
+    receipt.setStyle(TableStyle([
+        ("LINEBELOW", (0, 1), (-1, 1), .6, colors.HexColor("#667085")),
+        ("VALIGN", (0, 0), (-1, -1), "BOTTOM"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 8 * mm),
+    ]))
+    story.append(receipt)
+
+    def footer(canvas, doc):
+        canvas.saveState()
+        canvas.setFillColor(colors.HexColor("#667085"))
+        canvas.setFont("Helvetica", 7)
+        canvas.drawString(
+            horizontal_margin, 8 * mm,
+            "3F Handelsgesellschaft mbH · Ederstraße 72 · 57319 Bad Berleburg",
+        )
+        canvas.drawRightString(A4[0] - horizontal_margin, 8 * mm, f"Seite {doc.page}")
+        canvas.restoreState()
+
+    document.build(story, onFirstPage=footer, onLaterPages=footer)
+    return buffer.getvalue()

@@ -1,0 +1,52 @@
+{
+  "key": "vorlaeufiger-lieferschein",
+  "name": "Vorläufiger Lieferschein",
+  "description": "Einfacher, preisfreier Lieferschein aus den Positionen eines SilverERP-Auftrags.",
+  "export_source": "Auftrag / Positionen",
+  "export_instructions": "In SilverERP den gewünschten Auftrag öffnen, die Positionsliste anzeigen und als CSV exportieren.",
+  "required_columns": [
+    "Pos.",
+    "Artikel-Nr.",
+    "Bezeichnung 1",
+    "Bezeichnung 2",
+    "Menge",
+    "Einheit",
+    "Lieferdatum"
+  ],
+  "query": "SELECT\n        `Pos.` AS 'Pos.',\n        `Artikel-Nr.`,\n        TRIM(COALESCE(`Bezeichnung 1`, '') || CASE WHEN COALESCE(TRIM(`Bezeichnung 2`), '') = '' THEN '' ELSE chr(10) || TRIM(`Bezeichnung 2`) END) AS 'Bezeichnung',\n        `Menge`,\n        `Einheit`\n      FROM data\n      WHERE COALESCE(TRIM(`Artikel-Nr.`), '') <> ''\n      ORDER BY COALESCE(TRY_CAST(`Pos.` AS INTEGER), 999999), `Artikel-Nr.`",
+  "renderer": "delivery-note",
+  "variables": [
+    {
+      "name": "empfaenger",
+      "type": "userText",
+      "label": "Empfänger / Lieferanschrift",
+      "required": false,
+      "multiline": true,
+      "rows": 4,
+      "help_text": "Optional, da diese Angaben im Positions-Export nicht enthalten sind."
+    },
+    {
+      "name": "referenz",
+      "type": "userText",
+      "label": "Referenz / Auftragsnummer",
+      "required": false
+    },
+    {
+      "name": "lieferdatum",
+      "type": "sql",
+      "label": "Lieferdatum",
+      "query": "SELECT CASE WHEN COUNT(DISTINCT NULLIF(TRIM(`Lieferdatum`), '')) = 1 THEN MAX(NULLIF(TRIM(`Lieferdatum`), '')) ELSE 'siehe Positionen' END FROM data"
+    },
+    {
+      "name": "title",
+      "type": "constant",
+      "label": "Titel",
+      "value": "Vorläufiger Lieferschein"
+    }
+  ],
+  "additional_sources": [],
+  "groups": [],
+  "options": {
+    "layout": "delivery-note"
+  }
+}

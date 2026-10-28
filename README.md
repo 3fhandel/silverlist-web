@@ -181,6 +181,11 @@ Das geprüfte ZIP-Archiv wird unter `extension/dist/` erzeugt. Für die lokale
 Entwicklung kann der Ordner `extension` unter `chrome://extensions` als
 entpackte Erweiterung geladen werden.
 
+Beim Docker-Build wird die Erweiterung automatisch über dasselbe Makefile
+geprüft und gepackt. Das erzeugte ZIP kann anschließend direkt auf der
+SilverLists-Web-Startseite heruntergeladen, entpackt und im Chrome-
+Entwicklermodus geladen werden.
+
 ## Corporate-Design-Dateien
 
 Optionale Bilddateien für den PDF-Kopf gehören nach `web/assets/`:

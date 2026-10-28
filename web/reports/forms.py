@@ -43,7 +43,16 @@ class ReportConfigurationForm(forms.Form):
         for variable in definition.variables:
             kind = variable["type"]
             if kind == "userText":
-                self.fields[variable["name"]] = forms.CharField(label=variable["label"])
+                self.fields[variable["name"]] = forms.CharField(
+                    label=variable["label"],
+                    required=variable.get("required", True),
+                    help_text=variable.get("help_text", ""),
+                    widget=(
+                        forms.Textarea(attrs={"rows": variable.get("rows", 3)})
+                        if variable.get("multiline")
+                        else forms.TextInput()
+                    ),
+                )
             elif kind == "userBool":
                 self.fields[variable["name"]] = forms.BooleanField(label=variable["label"], required=False)
             elif kind == "userSelect":

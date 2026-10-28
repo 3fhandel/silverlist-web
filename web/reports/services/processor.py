@@ -10,7 +10,8 @@ from reports.catalog import get_definition
 from reports.models import ReportJob
 from reports.services.duckdb_engine import execute_report
 from reports.services.pdf_renderer import (
-    render_address_labels_pdf, render_generic_pdf, render_ordersatz_pdf,
+    render_address_labels_pdf, render_delivery_note_pdf, render_generic_pdf,
+    render_ordersatz_pdf,
 )
 
 
@@ -107,18 +108,21 @@ def process_job(job: ReportJob) -> ReportJob:
             context = _ordersatz_context(job, result.columns, result.rows)
             template = "reports/results/ordersatz.html"
             pdf = render_ordersatz_pdf(context["groups"], context["position_count"])
-        elif definition.renderer in {"generic-table", "grouped-table", "address-labels"}:
+        elif definition.renderer in {
+            "generic-table", "grouped-table", "address-labels", "delivery-note",
+        }:
             context = {
                 "job": job, "definition": definition, "columns": result.columns,
                 "rows": result.rows, "variables": result.variables,
             }
             context.update(_table_context(definition, result))
             template = "reports/results/generic_table.html"
-            pdf = (
-                render_address_labels_pdf(definition, result)
-                if definition.renderer == "address-labels"
-                else render_generic_pdf(definition, result)
-            )
+            if definition.renderer == "address-labels":
+                pdf = render_address_labels_pdf(definition, result)
+            elif definition.renderer == "delivery-note":
+                pdf = render_delivery_note_pdf(definition, result)
+            else:
+                pdf = render_generic_pdf(definition, result)
         else:
             raise NotImplementedError(f"Unbekannter Renderer: {definition.renderer}")
 
