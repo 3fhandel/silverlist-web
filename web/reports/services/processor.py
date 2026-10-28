@@ -11,6 +11,7 @@ from reports.models import ReportJob
 from reports.services.duckdb_engine import execute_report
 from reports.services.pdf_renderer import (
     render_address_labels_pdf, render_delivery_note_pdf, render_generic_pdf,
+    render_warehouse_note_pdf,
     render_ordersatz_pdf,
 )
 
@@ -110,6 +111,7 @@ def process_job(job: ReportJob) -> ReportJob:
             pdf = render_ordersatz_pdf(context["groups"], context["position_count"])
         elif definition.renderer in {
             "generic-table", "grouped-table", "address-labels", "delivery-note",
+            "warehouse-note",
         }:
             context = {
                 "job": job, "definition": definition, "columns": result.columns,
@@ -121,6 +123,8 @@ def process_job(job: ReportJob) -> ReportJob:
                 pdf = render_address_labels_pdf(definition, result)
             elif definition.renderer == "delivery-note":
                 pdf = render_delivery_note_pdf(definition, result)
+            elif definition.renderer == "warehouse-note":
+                pdf = render_warehouse_note_pdf(definition, result)
             else:
                 pdf = render_generic_pdf(definition, result)
         else:

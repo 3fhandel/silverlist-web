@@ -729,3 +729,198 @@ def render_delivery_note_pdf(definition, result) -> bytes:
 
     document.build(story, onFirstPage=footer, onLaterPages=footer)
     return buffer.getvalue()
+
+
+def render_warehouse_note_pdf(definition, result) -> bytes:
+    """Interner Lagerbeleg mit großzügigen Schreibzeilen für die Kommissionierung."""
+    buffer = BytesIO()
+    margin = 11 * mm
+    document = SimpleDocTemplate(
+        buffer, pagesize=A4,
+        leftMargin=margin, rightMargin=margin,
+        topMargin=11 * mm, bottomMargin=15 * mm,
+        title=str(result.variables.get("title", definition.name)),
+        author="3F Handelsgesellschaft mbH",
+    )
+    styles = getSampleStyleSheet()
+    title = ParagraphStyle(
+        "WarehouseTitle", parent=styles["Title"], fontName="Helvetica-Bold",
+        fontSize=19, leading=22, alignment=TA_LEFT, textColor=INK,
+    )
+    appointment_style = ParagraphStyle(
+        "WarehouseAppointment", parent=title, fontSize=18, leading=21,
+        alignment=TA_RIGHT,
+    )
+    body = ParagraphStyle(
+        "WarehouseBody", parent=styles["BodyText"], fontName="Helvetica",
+        fontSize=9.5, leading=11.5, textColor=INK,
+    )
+    bold = ParagraphStyle("WarehouseBold", parent=body, fontName="Helvetica-Bold")
+    small = ParagraphStyle(
+        "WarehouseSmall", parent=body, fontSize=7.5, leading=9,
+        textColor=colors.HexColor("#5F6B7A"),
+    )
+    table_header = ParagraphStyle(
+        "WarehouseHeader", parent=small, fontName="Helvetica-Bold",
+        textColor=colors.white,
+    )
+    right = ParagraphStyle("WarehouseRight", parent=body, alignment=TA_RIGHT)
+    right_bold = ParagraphStyle("WarehouseRightBold", parent=bold, alignment=TA_RIGHT)
+    center = ParagraphStyle("WarehouseCenter", parent=body, alignment=TA_CENTER)
+    center_bold = ParagraphStyle("WarehouseCenterBold", parent=bold, alignment=TA_CENTER)
+
+    story = []
+    logo = _asset("3f-logo-minibw.png")
+    if logo.exists():
+        company = Table([[Image(str(logo), 10 * mm, 10 * mm), Paragraph(
+            "<b>3F Handelsgesellschaft mbH</b><br/>Ederstraße 72 · 57319 Bad Berleburg",
+            body,
+        )]], colWidths=[13 * mm, 80 * mm], hAlign="LEFT")
+        company.setStyle(TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 0),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+            ("TOPPADDING", (0, 0), (-1, -1), 0),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+        ]))
+        story.extend([company, Spacer(1, 3 * mm)])
+    customer = escape(str(result.variables.get("kundennummer") or "-"))
+    customer_address = escape(str(result.variables.get("kundenanschrift") or "-"))
+    document_number = escape(str(result.variables.get("lagerbelegnummer") or "-"))
+    appointment = escape(str(result.variables.get("termin") or "-"))
+    heading = Table([[
+        Paragraph("Vorläufiger Lagerbeleg", title),
+        Paragraph(f"<font size=8>Termin</font><br/><b>{appointment}</b>", appointment_style),
+    ]], colWidths=[118 * mm, 70 * mm], hAlign="LEFT")
+    heading.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "BOTTOM"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ("TOPPADDING", (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+    ]))
+    story.extend([heading, Spacer(1, 3 * mm)])
+
+    address = Table([
+        [Paragraph("<b>Kundenanschrift</b>", body)],
+        [Paragraph(customer_address.replace("\n", "<br/>"), body)],
+    ], colWidths=[90 * mm], rowHeights=[7 * mm, 33 * mm])
+    address.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), LIGHT),
+        ("BOX", (0, 0), (-1, -1), .5, colors.HexColor("#C5CEDA")),
+        ("LINEBELOW", (0, 0), (-1, 0), .35, colors.HexColor("#D7DEE7")),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 6),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+    ]))
+    document_data = Table([
+        [Paragraph("<b>Dokumentdaten</b>", body)],
+        [Paragraph(
+            f"Kundennummer: <b>{customer}</b><br/>"
+            f"Lagerbelegnummer: <b>{document_number}</b><br/>"
+            f"Positionen: {len(result.rows)}",
+            body,
+        )],
+    ], colWidths=[93 * mm], rowHeights=[7 * mm, 33 * mm])
+    document_data.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), LIGHT),
+        ("BOX", (0, 0), (-1, -1), .5, colors.HexColor("#C5CEDA")),
+        ("LINEBELOW", (0, 0), (-1, 0), .35, colors.HexColor("#D7DEE7")),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 6),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+    ]))
+    meta = Table([[address, "", document_data]], colWidths=[90 * mm, 5 * mm, 93 * mm], hAlign="LEFT")
+    meta.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ("TOPPADDING", (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+    ]))
+    leergut = Table([
+        [Paragraph("<b>Leergut</b>", body)],
+        [""],
+    ], colWidths=[188 * mm], rowHeights=[7 * mm, 23 * mm], hAlign="LEFT")
+    leergut.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), LIGHT),
+        ("BOX", (0, 0), (-1, -1), .5, colors.HexColor("#C5CEDA")),
+        ("LINEBELOW", (0, 0), (-1, 0), .35, colors.HexColor("#D7DEE7")),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 6),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+    ]))
+    story.extend([meta, Spacer(1, 3 * mm), leergut, Spacer(1, 3 * mm)])
+    story.append(Paragraph(
+        "<b>Hinweis:</b> Lieferhinweise können auf diesem vorläufigen Lagerbeleg nicht angedruckt werden.",
+        body,
+    ))
+    story.append(Spacer(1, 4 * mm))
+
+    visible_columns = [column for column in result.columns if column != "__fett"]
+    widths_by_name = {
+        "Pos.": 11 * mm, "Artikel-Nr.": 29 * mm, "Bezeichnung": 85 * mm,
+        "Menge": 19 * mm, "Einheit": 17 * mm, "Komm": 27 * mm,
+    }
+    data = [[_paragraph(column, table_header) for column in visible_columns]]
+    styles_by_row = []
+    bold_index = result.columns.index("__fett")
+    for output_row, row in enumerate(result.rows, start=1):
+        is_bold = str(row[bold_index]) == "1"
+        rendered = []
+        for column in visible_columns:
+            value = row[result.columns.index(column)]
+            if column == "Komm":
+                cell_style = center_bold if is_bold else center
+            elif column == "Menge":
+                cell_style = right_bold if is_bold else right
+            elif column in {"Pos.", "Einheit"}:
+                cell_style = center_bold if is_bold else center
+            else:
+                cell_style = bold if is_bold else body
+            rendered.append(_paragraph(value, cell_style))
+        data.append(rendered)
+        if is_bold:
+            styles_by_row.append(("FONTNAME", (0, output_row), (-1, output_row), "Helvetica-Bold"))
+
+    positions = Table(
+        data,
+        colWidths=[widths_by_name[column] for column in visible_columns],
+        rowHeights=[8 * mm] + [18 * mm] * len(result.rows),
+        repeatRows=1,
+        hAlign="LEFT",
+    )
+    positions.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#25364C")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F4F6F8")]),
+        ("GRID", (0, 0), (-1, -1), .35, colors.HexColor("#B8C2CF")),
+        ("LINEBEFORE", (-1, 0), (-1, -1), .8, colors.HexColor("#6B7788")),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 4),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+        *styles_by_row,
+    ]))
+    story.append(positions)
+
+    def footer(canvas, doc):
+        canvas.saveState()
+        canvas.setFillColor(colors.HexColor("#667085"))
+        canvas.setFont("Helvetica", 7)
+        canvas.drawString(
+            margin, 7 * mm,
+            "3F Handelsgesellschaft mbH · Ederstraße 72 · 57319 Bad Berleburg · Nur für den internen Gebrauch",
+        )
+        canvas.drawRightString(A4[0] - margin, 7 * mm, f"Seite {doc.page}")
+        canvas.restoreState()
+
+    document.build(story, onFirstPage=footer, onLaterPages=footer)
+    return buffer.getvalue()

@@ -15,6 +15,7 @@ class ReportDefinition:
     export_instructions: str
     required_columns: tuple[str, ...]
     implementation: Literal["sql", "python"]
+    optional_columns: tuple[str, ...] = ()
     query: str = ""
     renderer: str = "generic-table"
     source_confidence: str = "confirmed"
@@ -34,6 +35,7 @@ def _load_json(path: Path) -> ReportDefinition:
         export_source=raw["export_source"],
         export_instructions=raw.get("export_instructions", ""),
         required_columns=tuple(raw["required_columns"]), implementation="sql",
+        optional_columns=tuple(raw.get("optional_columns", [])),
         query=raw["query"], renderer=raw.get("renderer", "generic-table"),
         source_confidence=raw.get("source_confidence", "confirmed"),
         variables=tuple(raw.get("variables", [])),

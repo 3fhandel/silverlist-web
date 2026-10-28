@@ -92,7 +92,7 @@ def _normalized_file(stack: ExitStack, source: str | Path):
     return handle.name
 
 
-def _create_csv_view(connection, path: str, name: str) -> tuple[str, ...]:
+def _create_csv_view(connection, path: str, name: str, optional_columns=()) -> tuple[str, ...]:
     if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name):
         raise ReportInputError(f"Ungültiger Datenquellenname: {name}")
     raw_name = f"__raw_{name}"
@@ -107,6 +107,10 @@ def _create_csv_view(connection, path: str, name: str) -> tuple[str, ...]:
     for alias, canonical in _HEADER_ALIASES.items():
         if alias in raw_header and canonical not in raw_header:
             projections.append(f'"{alias}" AS "{canonical}"')
+    for column in optional_columns:
+        if column not in raw_header:
+            escaped = str(column).replace('"', '""')
+            projections.append(f"'' AS \"{escaped}\"")
     connection.execute(
         f'CREATE VIEW "{name}" AS SELECT {", ".join(projections)} FROM "{raw_name}"'
     )
@@ -116,7 +120,10 @@ def _create_csv_view(connection, path: str, name: str) -> tuple[str, ...]:
 def execute_report(source, definition: ReportDefinition, parameters=None, additional_sources=None) -> QueryResult:
     variables = dict(parameters or {})
     with ExitStack() as stack, duckdb.connect(":memory:") as connection:
-        header = _create_csv_view(connection, _normalized_file(stack, source), "data")
+        header = _create_csv_view(
+            connection, _normalized_file(stack, source), "data",
+            definition.optional_columns,
+        )
         missing = set(definition.required_columns) - set(header)
         if missing:
             raise ReportInputError("CSV-Spalten fehlen: " + ", ".join(sorted(missing)))

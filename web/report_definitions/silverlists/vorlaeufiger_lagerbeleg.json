@@ -1,0 +1,66 @@
+{
+  "key": "vorlaeufiger-lagerbeleg",
+  "name": "Vorläufiger Lagerbeleg",
+  "description": "Interner Lagerbeleg mit Sollmenge und Freifeld für die kommissionierte Menge.",
+  "export_source": "Auftrag / Positionen (Lageransicht)",
+  "export_instructions": "In SilverERP den gewünschten Auftrag öffnen, die Positionsliste der Lageransicht anzeigen und als CSV exportieren.",
+  "required_columns": [
+    "Pos.",
+    "Artikel-Nr.",
+    "Bezeichnung 1",
+    "Bezeichnung 2",
+    "Bezeichnung 4",
+    "Menge",
+    "Einheit",
+    "Termin",
+    "Deckung",
+    "Status",
+    "Disponierbar"
+  ],
+  "optional_columns": ["Bezeichnung 3"],
+  "query": "SELECT `Pos.` AS 'Pos.', `Artikel-Nr.`, TRIM(COALESCE(`Bezeichnung 1`, '') || CASE WHEN COALESCE(TRIM(`Bezeichnung 2`), '') = '' THEN '' ELSE chr(10) || TRIM(`Bezeichnung 2`) END || CASE WHEN COALESCE(TRIM(`Bezeichnung 3`), '') = '' THEN '' ELSE chr(10) || TRIM(`Bezeichnung 3`) END || CASE WHEN COALESCE(TRIM(`Bezeichnung 4`), '') = '' THEN '' ELSE chr(10) || TRIM(`Bezeichnung 4`) END) AS 'Bezeichnung', `Menge`, `Einheit`, '' AS 'Komm', CASE WHEN COALESCE(TRIM(`Bezeichnung 3`), '') <> '' OR COALESCE(TRIM(`Bezeichnung 4`), '') <> '' THEN '1' ELSE '0' END AS '__fett' FROM data WHERE COALESCE(TRIM(`Artikel-Nr.`), '') <> '' ORDER BY `Artikel-Nr.` ASC, COALESCE(TRY_CAST(`Pos.` AS INTEGER), 999999)",
+  "renderer": "warehouse-note",
+  "variables": [
+    {
+      "name": "kundennummer",
+      "type": "userText",
+      "label": "Kundennummer",
+      "required": true,
+      "help_text": "Die Kundennummer wird im Kopf des Lagerbelegs angedruckt."
+    },
+    {
+      "name": "kundenanschrift",
+      "type": "userText",
+      "label": "Kundenname und Anschrift",
+      "required": true,
+      "multiline": true,
+      "rows": 4,
+      "help_text": "Name und vollständige Anschrift für das DIN-Adressfeld."
+    },
+    {
+      "name": "lagerbelegnummer",
+      "type": "userText",
+      "label": "Lagerbelegnummer / Auftragsnummer",
+      "required": true,
+      "help_text": "Die Auftragsnummer wird als Lagerbelegnummer im Dokumentkopf angedruckt."
+    },
+    {
+      "name": "termin",
+      "type": "sql",
+      "label": "Termin",
+      "query": "SELECT CASE WHEN COUNT(DISTINCT NULLIF(TRIM(`Termin`), '')) = 1 THEN MAX(NULLIF(TRIM(`Termin`), '')) ELSE 'siehe Positionen' END FROM data"
+    },
+    {
+      "name": "title",
+      "type": "constant",
+      "label": "Titel",
+      "value": "Vorläufiger Lagerbeleg"
+    }
+  ],
+  "additional_sources": [],
+  "groups": [],
+  "options": {
+    "hidden_columns": ["__fett"],
+    "layout": "warehouse-note"
+  }
+}

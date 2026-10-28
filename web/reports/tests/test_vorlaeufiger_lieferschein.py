@@ -11,9 +11,9 @@ from reports.services.pdf_renderer import render_delivery_note_pdf
 
 
 SOURCE = (
-    "Pos.;Artikel-Nr.;Bezeichnung 1;Bezeichnung 2;Menge;Einheit;Lieferdatum\n"
-    "2;80-2;Zweiter Artikel;;3;KT;28.10.2026\n"
-    "1;40-1;Erster Artikel;Restmenge geliefert;12;ST;28.10.2026\n"
+    "Pos.;Artikel-Nr.;Bezeichnung 1;Bezeichnung 2;Bezeichnung 3;Menge;Einheit;Lieferdatum\n"
+    "2;80-2;Zweiter Artikel;;;3;KT;28.10.2026\n"
+    "1;40-1;Erster Artikel;Restmenge geliefert;;12;ST;28.10.2026\n"
 ).encode("cp1252")
 
 
