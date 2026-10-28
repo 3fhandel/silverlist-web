@@ -10,9 +10,9 @@ from reports.services.pdf_renderer import render_warehouse_note_pdf
 
 
 SOURCE = (
-    "Pos.;Artikel-Nr.;Bezeichnung 1;Bezeichnung 2;Bezeichnung 4;Menge;Einheit;Termin;Deckung;Status;Disponierbar\n"
-    "2;80-2;Normaler Artikel;;;3;KT;04.11.2026;1;offen;1\n"
-    "1;40-1;Artikel mit Hinweis;;Nur gekühlt lagern;12;ST;04.11.2026;1;offen;1\n"
+    "Pos.;Artikel-Nr.;Bezeichnung 1;Bezeichnung 2;Bezeichnung 4;Menge;Einheit;Termin;Lieferdatum;Deckung;Status;Disponierbar\n"
+    "2;80-2;Normaler Artikel;;;3;KT;04.11.2026;04.11.2026;1;offen;1\n"
+    "1;40-1;Artikel mit Hinweis;;Nur gekühlt lagern;12;ST;04.11.2026;04.11.2026;1;offen;1\n"
 ).encode("cp1252")
 
 
@@ -47,7 +47,7 @@ def test_warehouse_note_workflow_requests_customer_number(client, settings, tmp_
     job = ReportJob.objects.get()
     selection = client.get(response.url).content.decode()
     assert "Vorläufiger Lagerbeleg" in selection
-    assert "Vorläufiger Lieferschein" not in selection
+    assert "Vorläufiger Lieferschein" in selection
 
     response = client.post(response.url, {"report_key": "vorlaeufiger-lagerbeleg"})
     assert response.url == reverse("reports:configure-report", args=[job.pk])
